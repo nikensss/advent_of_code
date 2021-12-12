@@ -1,7 +1,5 @@
 from typing import List
 
-import pandas as pd
-
 
 def read_input_file(path: str) -> List[dict]:
     with open(path) as f:
