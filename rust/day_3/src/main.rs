@@ -19,18 +19,25 @@ fn main() {
 
 fn count_bit_occurrence(contents: &Vec<&str>) -> Vec<i32> {
     let mut count: Vec<i32> = vec![0; contents[0].len()];
-    for line in contents {
-        for i in 0..line.len() {
-            let character = &line[i..i + 1];
-            match character {
-                "0" => count[i] = count[i] - 1,
-                "1" => count[i] = count[i] + 1,
-                _ => panic!("Invalid character found: {}", character),
-            }
-        }
+    for i in 0..count.len() {
+        count[i] = count_bit_occurrence_at(&contents, i);
     }
 
     count
+}
+
+fn count_bit_occurrence_at(contents: &Vec<&str>, index: usize) -> i32 {
+    let mut occurence = 0;
+    for line in contents {
+        let character = &line[index..index + 1];
+        match character {
+            "0" => occurence -= 1,
+            "1" => occurence += 1,
+            _ => panic!("Invalid character found: {}", character),
+        };
+    }
+
+    occurence
 }
 
 fn calculate_gamma(count: &Vec<i32>) -> isize {
@@ -61,8 +68,8 @@ fn calculate_oxygen(contents: &Vec<&str>) -> isize {
             break;
         }
 
-        let moving_count = count_bit_occurrence(&oxygen_candidates);
-        let most_common = if moving_count[i] >= 0 { "1" } else { "0" };
+        let moving_count = count_bit_occurrence_at(&oxygen_candidates, i);
+        let most_common = if moving_count >= 0 { "1" } else { "0" };
         oxygen_candidates = oxygen_candidates
             .into_iter()
             .filter(|candidate| &candidate[i..i + 1] == most_common)
@@ -80,8 +87,8 @@ fn calculate_co2(contents: &Vec<&str>) -> isize {
             break;
         }
 
-        let moving_count = count_bit_occurrence(&co2_candidates);
-        let least_common = if moving_count[i] >= 0 { "0" } else { "1" };
+        let moving_count = count_bit_occurrence_at(&co2_candidates, i);
+        let least_common = if moving_count >= 0 { "0" } else { "1" };
         co2_candidates = co2_candidates
             .into_iter()
             .filter(|candidate| &candidate[i..i + 1] == least_common)
