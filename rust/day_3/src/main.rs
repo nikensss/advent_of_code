@@ -6,15 +6,28 @@ fn main() {
     let contents = fs::read_to_string(filename).expect("Could not read file");
     let contents: Vec<&str> = contents.lines().collect();
 
-    let count = count_bit_occurrence(&contents);
-    let gamma = calculate_gamma(&count);
-    let epsilon = calculate_epsilon(&count);
+    let gamma = calculate_gamma(&contents);
+    let epsilon = calculate_epsilon(&contents);
 
     let oxygen = calculate_oxygen(&contents);
     let co2 = calculate_co2(&contents);
 
     println!("{} * {} = {}", gamma, epsilon, gamma * epsilon);
     println!("{} * {} = {}", oxygen, co2, oxygen * co2);
+}
+
+fn find_most_common<'a>(contents: &'a Vec<&str>) -> Vec<&'a str> {
+    count_bit_occurrence(&contents)
+        .into_iter()
+        .map(|x| if x >= 0 { "1" } else { "0" })
+        .collect::<Vec<&str>>()
+}
+
+fn find_least_common<'a>(contents: &'a Vec<&str>) -> Vec<&'a str> {
+    count_bit_occurrence(&contents)
+        .into_iter()
+        .map(|x| if x >= 0 { "0" } else { "1" })
+        .collect::<Vec<&str>>()
 }
 
 fn count_bit_occurrence(contents: &Vec<&str>) -> Vec<i32> {
@@ -40,21 +53,21 @@ fn count_bit_occurrence_at(contents: &Vec<&str>, index: usize) -> i32 {
     occurence
 }
 
-fn calculate_gamma(count: &Vec<i32>) -> isize {
+fn calculate_gamma(contents: &Vec<&str>) -> isize {
     let mut gamma_binary = String::from("");
-    for c in count {
-        let most_common = if *c >= 0 { "1" } else { "0" };
-        gamma_binary.push_str(most_common);
+    let most_common = find_most_common(&contents);
+    for c in most_common {
+        gamma_binary.push_str(c);
     }
 
     isize::from_str_radix(&gamma_binary, 2).unwrap()
 }
 
-fn calculate_epsilon(count: &Vec<i32>) -> isize {
+fn calculate_epsilon(contents: &Vec<&str>) -> isize {
     let mut epsilon_binary = String::from("");
-    for c in count {
-        let least_common = if *c >= 0 { "0" } else { "1" };
-        epsilon_binary.push_str(least_common);
+    let least_common = find_least_common(&contents);
+    for c in least_common {
+        epsilon_binary.push_str(c);
     }
 
     isize::from_str_radix(&epsilon_binary, 2).unwrap()
@@ -109,9 +122,8 @@ mod test {
         let contents = fs::read_to_string(filename).expect("Could not read file");
         let contents: Vec<&str> = contents.lines().collect();
 
-        let count = count_bit_occurrence(&contents);
-        let gamma = calculate_gamma(&count);
-        let epsilon = calculate_epsilon(&count);
+        let gamma = calculate_gamma(&contents);
+        let epsilon = calculate_epsilon(&contents);
 
         assert_eq!(gamma * epsilon, 2595824);
     }
