@@ -17,14 +17,14 @@ fn main() {
 }
 
 fn find_most_common<'a>(lines: &'a Vec<&str>) -> Vec<&'a str> {
-    count_bit_occurrence(&lines)
+    count_bit_occurrence(lines)
         .into_iter()
         .map(|x| if x >= 0 { "1" } else { "0" })
         .collect::<Vec<&str>>()
 }
 
 fn find_least_common<'a>(lines: &'a Vec<&str>) -> Vec<&'a str> {
-    count_bit_occurrence(&lines)
+    count_bit_occurrence(lines)
         .into_iter()
         .map(|x| if x >= 0 { "0" } else { "1" })
         .collect::<Vec<&str>>()
@@ -32,8 +32,8 @@ fn find_least_common<'a>(lines: &'a Vec<&str>) -> Vec<&'a str> {
 
 fn count_bit_occurrence(lines: &Vec<&str>) -> Vec<i32> {
     let mut count: Vec<i32> = vec![0; lines[0].len()];
-    for i in 0..count.len() {
-        count[i] = count_bit_occurrence_at(&lines, i);
+    for (i, item) in count.iter_mut().enumerate() {
+        *item = count_bit_occurrence_at(lines, i);
     }
 
     count
@@ -55,7 +55,7 @@ fn count_bit_occurrence_at(lines: &Vec<&str>, index: usize) -> i32 {
 
 fn calculate_gamma(lines: &Vec<&str>) -> isize {
     let mut gamma_binary = String::from("");
-    let most_common = find_most_common(&lines);
+    let most_common = find_most_common(lines);
     for c in most_common {
         gamma_binary.push_str(c);
     }
@@ -65,7 +65,7 @@ fn calculate_gamma(lines: &Vec<&str>) -> isize {
 
 fn calculate_epsilon(lines: &Vec<&str>) -> isize {
     let mut epsilon_binary = String::from("");
-    let least_common = find_least_common(&lines);
+    let least_common = find_least_common(lines);
     for c in least_common {
         epsilon_binary.push_str(c);
     }
@@ -73,8 +73,8 @@ fn calculate_epsilon(lines: &Vec<&str>) -> isize {
     isize::from_str_radix(&epsilon_binary, 2).unwrap()
 }
 
-fn calculate_oxygen(lines: &Vec<&str>) -> isize {
-    let mut oxygen_candidates = lines.clone();
+fn calculate_oxygen(lines: &[&str]) -> isize {
+    let mut oxygen_candidates = lines.to_owned().clone();
     let total_bits = oxygen_candidates[0].len();
     for i in 0..total_bits {
         if oxygen_candidates.len() == 1 {
@@ -89,11 +89,11 @@ fn calculate_oxygen(lines: &Vec<&str>) -> isize {
             .collect::<Vec<&str>>();
     }
 
-    isize::from_str_radix(&oxygen_candidates[0], 2).unwrap()
+    isize::from_str_radix(oxygen_candidates[0], 2).unwrap()
 }
 
-fn calculate_co2(lines: &Vec<&str>) -> isize {
-    let mut co2_candidates: Vec<&str> = lines.clone();
+fn calculate_co2(lines: &[&str]) -> isize {
+    let mut co2_candidates: Vec<&str> = lines.to_owned().clone();
     let total_bits = co2_candidates[0].len();
     for i in 0..total_bits {
         if co2_candidates.len() == 1 {
@@ -108,7 +108,7 @@ fn calculate_co2(lines: &Vec<&str>) -> isize {
             .collect::<Vec<&str>>();
     }
 
-    isize::from_str_radix(&co2_candidates[0], 2).unwrap()
+    isize::from_str_radix(co2_candidates[0], 2).unwrap()
 }
 
 #[cfg(test)]
