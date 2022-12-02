@@ -109,7 +109,13 @@ impl FromStr for Outcome {
 fn main() {
     let filename = "input_01.txt";
     let strategy_guide = fs::read_to_string(filename).expect("Could not read file");
-    let strategy_guide = strategy_guide.lines().collect::<Vec<&str>>();
+    let strategy_guide: Vec<(&str, &str)> = strategy_guide
+        .lines()
+        .map(|x| {
+            let spl: Vec<&str> = x.split(' ').collect();
+            (spl[0], spl[1])
+        })
+        .collect();
 
     let part_1_score = part_1(&strategy_guide);
     let part_1_ok = if part_1_score == 11475 { "ok" } else { "wrong" };
@@ -120,15 +126,14 @@ fn main() {
     println!("{} ({})", part_2_score, part_2_ok)
 }
 
-fn part_1(strategy_guide: &Vec<&str>) -> u32 {
+fn part_1(strategy_guide: &Vec<(&str, &str)>) -> u32 {
     let mut result: u32 = 0;
-    for line in strategy_guide {
-        let strategy: Vec<&str> = line.split(' ').collect();
-        let Ok(opponent_move) = strategy[0].parse::<OpponentMove>() else {
-            panic!("Cannot parse opponent move: {}", strategy[0]);
+    for strategy in strategy_guide {
+        let Ok(opponent_move) = strategy.0.parse::<OpponentMove>() else {
+            panic!("Cannot parse opponent move: {}", strategy.0);
         };
-        let Ok(my_move) = strategy[1].parse::<MyMove>() else {
-            panic!("Cannot parse my move: {}", strategy[1]);
+        let Ok(my_move) = strategy.1.parse::<MyMove>() else {
+            panic!("Cannot parse my move: {}", strategy.1);
         };
 
         let outcome = my_move.get_outcome(opponent_move);
@@ -139,16 +144,15 @@ fn part_1(strategy_guide: &Vec<&str>) -> u32 {
     result
 }
 
-fn part_2(strategy_guide: &Vec<&str>) -> u32 {
+fn part_2(strategy_guide: &Vec<(&str, &str)>) -> u32 {
     let mut result: u32 = 0;
 
-    for line in strategy_guide {
-        let strategy: Vec<&str> = line.split(' ').collect();
-        let Ok(opponent_move) = strategy[0].parse::<OpponentMove>() else {
-            panic!("Cannot parse opponent move: {}", strategy[0]);
+    for strategy in strategy_guide {
+        let Ok(opponent_move) = strategy.0.parse::<OpponentMove>() else {
+            panic!("Cannot parse opponent move: {}", strategy.0);
         };
-        let Ok(desired_outcome) = strategy[1].parse::<Outcome>() else {
-            panic!("Cannot parse desired outcome: {}", strategy[1]);
+        let Ok(desired_outcome) = strategy.1.parse::<Outcome>() else {
+            panic!("Cannot parse desired outcome: {}", strategy.1);
         };
 
         let my_move = MyMove::from_desired_outcome(desired_outcome, opponent_move);

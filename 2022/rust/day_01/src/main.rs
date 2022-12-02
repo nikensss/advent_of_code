@@ -3,7 +3,7 @@ use std::fs;
 fn main() {
     let filename = "input_01.txt";
     let calories = fs::read_to_string(filename).expect("Could not read file");
-    let calories = calories.lines().collect::<Vec<&str>>();
+    let calories: Vec<&str> = calories.lines().collect();
 
     let res_1 = part_1(&calories);
     println!(
