@@ -109,6 +109,7 @@ impl FromStr for Outcome {
 fn main() {
     let filename = "input_01.txt";
     let strategy_guide = fs::read_to_string(filename).expect("Could not read file");
+    let strategy_guide = strategy_guide.lines().collect::<Vec<&str>>();
 
     let part_1_score = part_1(&strategy_guide);
     let part_1_ok = if part_1_score == 11475 { "ok" } else { "wrong" };
@@ -119,9 +120,9 @@ fn main() {
     println!("{} ({})", part_2_score, part_2_ok)
 }
 
-fn part_1(strategy_guide: &str) -> u32 {
+fn part_1(strategy_guide: &Vec<&str>) -> u32 {
     let mut result: u32 = 0;
-    for line in strategy_guide.lines() {
+    for line in strategy_guide {
         let strategy: Vec<&str> = line.split(' ').collect();
         let Ok(opponent_move) = strategy[0].parse::<OpponentMove>() else {
             panic!("Cannot parse opponent move: {}", strategy[0]);
@@ -138,9 +139,10 @@ fn part_1(strategy_guide: &str) -> u32 {
     result
 }
 
-fn part_2(strategy_guide: &str) -> u32 {
+fn part_2(strategy_guide: &Vec<&str>) -> u32 {
     let mut result: u32 = 0;
-    for line in strategy_guide.lines() {
+
+    for line in strategy_guide {
         let strategy: Vec<&str> = line.split(' ').collect();
         let Ok(opponent_move) = strategy[0].parse::<OpponentMove>() else {
             panic!("Cannot parse opponent move: {}", strategy[0]);

@@ -3,6 +3,7 @@ use std::fs;
 fn main() {
     let filename = "input_01.txt";
     let calories = fs::read_to_string(filename).expect("Could not read file");
+    let calories = calories.lines().collect::<Vec<&str>>();
 
     let res_1 = part_1(&calories);
     println!(
@@ -19,11 +20,11 @@ fn main() {
     );
 }
 
-fn part_1(calories: &str) -> u32 {
+fn part_1(calories: &Vec<&str>) -> u32 {
     let mut current_count = 0;
     let mut max = 0;
 
-    for line in calories.lines() {
+    for line in calories {
         if let Ok(n) = line.parse::<u32>() {
             current_count += n;
         } else {
@@ -39,11 +40,11 @@ fn part_1(calories: &str) -> u32 {
     max
 }
 
-fn part_2(calories: &str) -> u32 {
+fn part_2(calories: &Vec<&str>) -> u32 {
     let mut current_count = 0;
     let mut calorie_count = Vec::new();
 
-    for line in calories.lines() {
+    for line in calories {
         if let Ok(n) = line.parse::<u32>() {
             current_count += n;
         } else {
