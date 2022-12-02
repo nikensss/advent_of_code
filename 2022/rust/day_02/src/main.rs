@@ -1,22 +1,12 @@
 use int_enum::IntEnum;
-use std::{fmt::Display, fs, str::FromStr};
+use std::{fs, str::FromStr};
 
 #[repr(u32)]
 #[derive(Clone, Copy, Debug, Eq, PartialEq, IntEnum)]
 enum OpponentMove {
-    A = 1,
-    B = 2,
-    C = 3,
-}
-
-impl Display for OpponentMove {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            OpponentMove::A => write!(f, "Rock"),
-            OpponentMove::B => write!(f, "Paper"),
-            OpponentMove::C => write!(f, "Scissors"),
-        }
-    }
+    Rock = 1,
+    Paper = 2,
+    Scissors = 3,
 }
 
 impl FromStr for OpponentMove {
@@ -24,9 +14,9 @@ impl FromStr for OpponentMove {
 
     fn from_str(s: &str) -> Result<OpponentMove, ()> {
         match s {
-            "A" => Ok(OpponentMove::A),
-            "B" => Ok(OpponentMove::B),
-            "C" => Ok(OpponentMove::C),
+            "A" => Ok(OpponentMove::Rock),
+            "B" => Ok(OpponentMove::Paper),
+            "C" => Ok(OpponentMove::Scissors),
             _ => Err(()),
         }
     }
@@ -35,19 +25,9 @@ impl FromStr for OpponentMove {
 #[repr(u32)]
 #[derive(Clone, Copy, Debug, Eq, PartialEq, IntEnum)]
 enum MyMove {
-    X = 1,
-    Y = 2,
-    Z = 3,
-}
-
-impl Display for MyMove {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            MyMove::X => write!(f, "Rock"),
-            MyMove::Y => write!(f, "Paper"),
-            MyMove::Z => write!(f, "Scissors"),
-        }
-    }
+    Rock = 1,
+    Paper = 2,
+    Scissors = 3,
 }
 
 impl FromStr for MyMove {
@@ -55,9 +35,9 @@ impl FromStr for MyMove {
 
     fn from_str(s: &str) -> Result<MyMove, ()> {
         match s {
-            "X" => Ok(MyMove::X),
-            "Y" => Ok(MyMove::Y),
-            "Z" => Ok(MyMove::Z),
+            "X" => Ok(MyMove::Rock),
+            "Y" => Ok(MyMove::Paper),
+            "Z" => Ok(MyMove::Scissors),
             _ => Err(()),
         }
     }
@@ -66,20 +46,40 @@ impl FromStr for MyMove {
 impl MyMove {
     fn get_outcome(&self, opponent_move: OpponentMove) -> Outcome {
         match opponent_move {
-            OpponentMove::A => match self {
-                MyMove::X => Outcome::Draw,
-                MyMove::Y => Outcome::Win,
-                MyMove::Z => Outcome::Lose,
+            OpponentMove::Rock => match self {
+                MyMove::Rock => Outcome::Draw,
+                MyMove::Paper => Outcome::Win,
+                MyMove::Scissors => Outcome::Lose,
             },
-            OpponentMove::B => match self {
-                MyMove::X => Outcome::Lose,
-                MyMove::Y => Outcome::Draw,
-                MyMove::Z => Outcome::Win,
+            OpponentMove::Paper => match self {
+                MyMove::Rock => Outcome::Lose,
+                MyMove::Paper => Outcome::Draw,
+                MyMove::Scissors => Outcome::Win,
             },
-            OpponentMove::C => match self {
-                MyMove::X => Outcome::Win,
-                MyMove::Y => Outcome::Lose,
-                MyMove::Z => Outcome::Draw,
+            OpponentMove::Scissors => match self {
+                MyMove::Rock => Outcome::Win,
+                MyMove::Paper => Outcome::Lose,
+                MyMove::Scissors => Outcome::Draw,
+            },
+        }
+    }
+
+    fn from_desired_outcome(outcome: Outcome, opponent_move: OpponentMove) -> MyMove {
+        match outcome {
+            Outcome::Lose => match opponent_move {
+                OpponentMove::Rock => MyMove::Scissors,
+                OpponentMove::Paper => MyMove::Rock,
+                OpponentMove::Scissors => MyMove::Paper,
+            },
+            Outcome::Draw => match opponent_move {
+                OpponentMove::Rock => MyMove::Rock,
+                OpponentMove::Paper => MyMove::Paper,
+                OpponentMove::Scissors => MyMove::Scissors,
+            },
+            Outcome::Win => match opponent_move {
+                OpponentMove::Rock => MyMove::Paper,
+                OpponentMove::Paper => MyMove::Scissors,
+                OpponentMove::Scissors => MyMove::Rock,
             },
         }
     }
@@ -93,26 +93,65 @@ enum Outcome {
     Win = 6,
 }
 
-fn main() {
-    let filename = "input_01.txt";
-    let lines = fs::read_to_string(filename).expect("Could not read file");
+impl FromStr for Outcome {
+    type Err = ();
 
-    let total_score = get_total_score(&lines);
-    let is_ok = if total_score == 11475 { "ok" } else { "wrong" };
-
-    println!("{} ({})", total_score, is_ok);
+    fn from_str(s: &str) -> Result<Outcome, ()> {
+        match s {
+            "X" => Ok(Outcome::Lose),
+            "Y" => Ok(Outcome::Draw),
+            "Z" => Ok(Outcome::Win),
+            _ => Err(()),
+        }
+    }
 }
 
-fn get_total_score(lines: &str) -> u32 {
+fn main() {
+    let filename = "input_01.txt";
+    let strategy_guide = fs::read_to_string(filename).expect("Could not read file");
+
+    let part_1_score = part_1(&strategy_guide);
+    let part_1_ok = if part_1_score == 11475 { "ok" } else { "wrong" };
+    println!("{} ({})", part_1_score, part_1_ok);
+
+    let part_2_score = part_2(&strategy_guide);
+    let part_2_ok = if part_2_score == 16862 { "ok" } else { "wrong" };
+    println!("{} ({})", part_2_score, part_2_ok)
+}
+
+fn part_1(strategy_guide: &str) -> u32 {
     let mut result: u32 = 0;
-    for line in lines.lines() {
-        let match_moves: Vec<&str> = line.split(' ').collect();
-        let Ok(my_move) = match_moves[1].parse::<MyMove>() else { panic!("{:?}",match_moves) };
-        let Ok(opponent_move) = match_moves[0].parse::<OpponentMove>() else { panic!("{:?}",match_moves) };
+    for line in strategy_guide.lines() {
+        let strategy: Vec<&str> = line.split(' ').collect();
+        let Ok(opponent_move) = strategy[0].parse::<OpponentMove>() else {
+            panic!("Cannot parse opponent move: {}", strategy[0]);
+        };
+        let Ok(my_move) = strategy[1].parse::<MyMove>() else {
+            panic!("Cannot parse my move: {}", strategy[1]);
+        };
 
         let outcome = my_move.get_outcome(opponent_move);
 
         result += my_move.int_value() + outcome.int_value();
+    }
+
+    result
+}
+
+fn part_2(strategy_guide: &str) -> u32 {
+    let mut result: u32 = 0;
+    for line in strategy_guide.lines() {
+        let strategy: Vec<&str> = line.split(' ').collect();
+        let Ok(opponent_move) = strategy[0].parse::<OpponentMove>() else {
+            panic!("Cannot parse opponent move: {}", strategy[0]);
+        };
+        let Ok(desired_outcome) = strategy[1].parse::<Outcome>() else {
+            panic!("Cannot parse desired outcome: {}", strategy[1]);
+        };
+
+        let my_move = MyMove::from_desired_outcome(desired_outcome, opponent_move);
+
+        result += my_move.int_value() + desired_outcome.int_value();
     }
 
     result
