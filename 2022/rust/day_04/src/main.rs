@@ -7,7 +7,7 @@ fn main() {
 
     let (res_part_01, res_part_02) = part_01_and_02(&lines);
     let is_part_01_ok = if res_part_01 == 567 { "ok" } else { "wrong" };
-    let is_part_02_ok = if res_part_02 == 567 { "ok" } else { "wrong" };
+    let is_part_02_ok = if res_part_02 == 907 { "ok" } else { "wrong" };
 
     println!("{} ({})", res_part_01, is_part_01_ok);
     println!("{} ({})", res_part_02, is_part_02_ok);
