@@ -1,5 +1,7 @@
+import { day1 } from './day1';
+
 const main = async (): Promise<void> => {
-  console.log('Hello, World!');
+  await day1();
 };
 
 main()
