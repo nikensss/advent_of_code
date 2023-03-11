@@ -44,9 +44,14 @@ fn main() {
         }
     }
 
-    let mut crane = Crane::new(stacks);
-    crane.apply_moves(moves);
+    let mut crane = Crane::new(stacks.clone());
+    crane.apply_9k_moves(&moves);
     let is_ok = crane.peek_stacks() == "DHBJQJCCW";
+    println!("{} ({})", crane.peek_stacks(), is_ok);
+
+    let mut crane = Crane::new(stacks.clone());
+    crane.apply_9k1_moves(&moves);
+    let is_ok = crane.peek_stacks() == "WJVRLSJJT";
     println!("{} ({})", crane.peek_stacks(), is_ok);
 }
 
@@ -107,6 +112,15 @@ struct CrateStack {
     crates: Vec<Crate>,
 }
 
+impl Clone for CrateStack {
+    fn clone(&self) -> Self {
+        return Self {
+            id: self.id,
+            crates: self.crates.clone(),
+        };
+    }
+}
+
 impl CrateStack {
     fn new(id: usize) -> Self {
         return Self { id, crates: vec![] };
@@ -135,7 +149,7 @@ impl Crane {
         return Self { stacks };
     }
 
-    fn apply_move(&mut self, move_: Move) {
+    fn apply_9k_move(&mut self, move_: &Move) {
         let mut crates = vec![];
 
         {
@@ -154,9 +168,34 @@ impl Crane {
         }
     }
 
-    fn apply_moves(&mut self, moves: Vec<Move>) {
+    fn apply_9k_moves(&mut self, moves: &Vec<Move>) {
         for move_ in moves {
-            self.apply_move(move_);
+            self.apply_9k_move(move_);
+        }
+    }
+
+    fn apply_9k1_move(&mut self, move_: &Move) {
+        let mut crates = vec![];
+
+        {
+            let from = self.stacks.get_mut(move_.from - 1).unwrap();
+            for _ in 0..move_.amount {
+                let Some(crt) = from.pop() else { continue; };
+                crates.push(crt);
+            }
+        }
+
+        {
+            let to = self.stacks.get_mut(move_.to - 1).unwrap();
+            for crate_ in crates.into_iter().rev() {
+                to.push(crate_);
+            }
+        }
+    }
+
+    fn apply_9k1_moves(&mut self, moves: &Vec<Move>) {
+        for move_ in moves {
+            self.apply_9k1_move(move_);
         }
     }
 
