@@ -1,4 +1,4 @@
-use std::{fs, str::FromStr};
+use std::{collections::HashMap, fs, str::FromStr};
 
 use nom::{
     bytes::complete::tag,
@@ -141,11 +141,15 @@ impl CrateStack {
 
 #[derive(Debug)]
 struct Crane {
-    stacks: Vec<CrateStack>,
+    stacks: HashMap<usize, CrateStack>,
 }
 
 impl Crane {
     fn new(stacks: Vec<CrateStack>) -> Self {
+        let stacks = stacks
+            .into_iter()
+            .map(|stack| (stack.id, stack))
+            .collect::<HashMap<usize, CrateStack>>();
         return Self { stacks };
     }
 
@@ -153,7 +157,7 @@ impl Crane {
         let mut crates = vec![];
 
         {
-            let from = self.stacks.get_mut(move_.from - 1).unwrap();
+            let from = self.stacks.get_mut(&move_.from).unwrap();
             for _ in 0..move_.amount {
                 let Some(crt) = from.pop() else { continue; };
                 crates.push(crt);
@@ -161,7 +165,7 @@ impl Crane {
         }
 
         {
-            let to = self.stacks.get_mut(move_.to - 1).unwrap();
+            let to = self.stacks.get_mut(&move_.to).unwrap();
             for crate_ in crates.into_iter() {
                 to.push(crate_);
             }
@@ -178,7 +182,7 @@ impl Crane {
         let mut crates = vec![];
 
         {
-            let from = self.stacks.get_mut(move_.from - 1).unwrap();
+            let from = self.stacks.get_mut(&move_.from).unwrap();
             for _ in 0..move_.amount {
                 let Some(crt) = from.pop() else { continue; };
                 crates.push(crt);
@@ -186,7 +190,7 @@ impl Crane {
         }
 
         {
-            let to = self.stacks.get_mut(move_.to - 1).unwrap();
+            let to = self.stacks.get_mut(&move_.to).unwrap();
             for crate_ in crates.into_iter().rev() {
                 to.push(crate_);
             }
@@ -200,8 +204,10 @@ impl Crane {
     }
 
     fn peek_stacks(&self) -> String {
-        return self
-            .stacks
+        let mut sorted_stacks = self.stacks.values().collect::<Vec<&CrateStack>>();
+        sorted_stacks.sort_by_key(|stack| stack.id);
+
+        return sorted_stacks
             .iter()
             .filter_map(|stack| stack.peek())
             .map(|crate_| crate_.name.clone())
