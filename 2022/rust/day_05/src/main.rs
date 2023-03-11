@@ -8,13 +8,11 @@ use nom::{
 };
 
 fn main() {
-    let lines = fs::read_to_string("sample.txt").unwrap();
+    let lines = fs::read_to_string("input_01.txt").unwrap();
     let crates_description = get_crates_description(&lines);
     let moves = get_moves(&lines);
-    println!("{:?}", crates_description);
-    println!("{:?}", moves);
 
-    let crates: Vec<Vec<Option<Crate>>> = crates_description
+    let crate_rows: Vec<Vec<Option<Crate>>> = crates_description
         .iter()
         .map(|line| {
             line.chars()
@@ -27,13 +25,29 @@ fn main() {
                 .collect::<Vec<Option<Crate>>>()
         })
         .collect();
-    println!("{:?}", crates);
 
     let moves: Vec<Move> = moves
         .iter()
         .map(|line| line.parse::<Move>().unwrap())
         .collect();
-    println!("{:?}", moves);
+
+    let mut stacks: Vec<CrateStack> = vec![];
+    for i in 0..crate_rows.get(0).unwrap().len() {
+        stacks.push(CrateStack::new(i + 1));
+    }
+
+    for stack in &mut stacks {
+        for row in crate_rows.iter().rev() {
+            if let Some(crate_) = row.get(stack.id - 1).unwrap() {
+                stack.push(crate_.clone());
+            }
+        }
+    }
+
+    let mut crane = Crane::new(stacks);
+    crane.apply_moves(moves);
+    let is_ok = crane.peek_stacks() == "DHBJQJCCW";
+    println!("{} ({})", crane.peek_stacks(), is_ok);
 }
 
 #[derive(Debug)]
@@ -51,6 +65,14 @@ impl FromStr for Crate {
         return Ok(Crate {
             name: name.to_string(),
         });
+    }
+}
+
+impl Clone for Crate {
+    fn clone(&self) -> Self {
+        return Self {
+            name: self.name.clone(),
+        };
     }
 }
 
@@ -76,6 +98,75 @@ impl FromStr for Move {
             to: to.parse::<usize>().map_err(|_| ())?,
             amount: amount.parse::<usize>().map_err(|_| ())?,
         });
+    }
+}
+
+#[derive(Debug)]
+struct CrateStack {
+    id: usize,
+    crates: Vec<Crate>,
+}
+
+impl CrateStack {
+    fn new(id: usize) -> Self {
+        return Self { id, crates: vec![] };
+    }
+
+    fn push(&mut self, crate_: Crate) {
+        self.crates.push(crate_);
+    }
+
+    fn pop(&mut self) -> Option<Crate> {
+        return self.crates.pop();
+    }
+
+    fn peek(&self) -> Option<&Crate> {
+        return self.crates.last();
+    }
+}
+
+#[derive(Debug)]
+struct Crane {
+    stacks: Vec<CrateStack>,
+}
+
+impl Crane {
+    fn new(stacks: Vec<CrateStack>) -> Self {
+        return Self { stacks };
+    }
+
+    fn apply_move(&mut self, move_: Move) {
+        let mut crates = vec![];
+
+        {
+            let from = self.stacks.get_mut(move_.from - 1).unwrap();
+            for _ in 0..move_.amount {
+                let Some(crt) = from.pop() else { continue; };
+                crates.push(crt);
+            }
+        }
+
+        {
+            let to = self.stacks.get_mut(move_.to - 1).unwrap();
+            for crate_ in crates.into_iter() {
+                to.push(crate_);
+            }
+        }
+    }
+
+    fn apply_moves(&mut self, moves: Vec<Move>) {
+        for move_ in moves {
+            self.apply_move(move_);
+        }
+    }
+
+    fn peek_stacks(&self) -> String {
+        return self
+            .stacks
+            .iter()
+            .filter_map(|stack| stack.peek())
+            .map(|crate_| crate_.name.clone())
+            .collect::<_>();
     }
 }
 
