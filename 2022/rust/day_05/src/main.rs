@@ -9,23 +9,14 @@ use nom::{
 
 fn main() {
     let lines = fs::read_to_string("input_01.txt").unwrap();
-    let crates_description = get_crates_description(&lines);
-    let moves = get_moves(&lines);
 
-    let crate_rows: Vec<Vec<Option<Crate>>> = crates_description
+    let crate_rows = get_crates_section(&lines);
+    let crate_rows: Vec<Vec<Option<Crate>>> = crate_rows
         .iter()
-        .map(|line| {
-            line.chars()
-                .collect::<Vec<char>>()
-                .chunks(4)
-                .map(|maybe_crate| {
-                    let maybe_crate = maybe_crate.iter().collect::<String>();
-                    return maybe_crate.parse::<Crate>().ok();
-                })
-                .collect::<Vec<Option<Crate>>>()
-        })
+        .map(|line| Crate::parse_crate_row(line))
         .collect();
 
+    let moves = get_moves_section(&lines);
     let moves: Vec<Move> = moves
         .iter()
         .map(|line| line.parse::<Move>().unwrap())
@@ -58,6 +49,20 @@ fn main() {
 #[derive(Debug)]
 struct Crate {
     name: String,
+}
+
+impl Crate {
+    fn parse_crate_row(line: &str) -> Vec<Option<Self>> {
+        return line
+            .chars()
+            .collect::<Vec<char>>()
+            .chunks(4)
+            .map(|maybe_crate| {
+                let maybe_crate = maybe_crate.iter().collect::<String>();
+                return maybe_crate.parse::<Crate>().ok();
+            })
+            .collect::<Vec<Option<Crate>>>();
+    }
 }
 
 impl FromStr for Crate {
@@ -215,11 +220,11 @@ impl Crane {
     }
 }
 
-fn get_crates_description(lines: &str) -> Vec<&str> {
+fn get_crates_section(lines: &str) -> Vec<&str> {
     lines.lines().take_while(|line| !line.is_empty()).collect()
 }
 
-fn get_moves(lines: &str) -> Vec<&str> {
+fn get_moves_section(lines: &str) -> Vec<&str> {
     lines
         .lines()
         .skip_while(|line| !line.is_empty())
