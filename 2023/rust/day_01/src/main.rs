@@ -1,11 +1,16 @@
 use std::fs;
 
 fn main() {
-    let lines = fs::read_to_string("test-input.txt").unwrap();
+    let lines = fs::read_to_string("test-input-01.txt").unwrap();
     let lines = lines.lines().collect();
-    let numbers = part_01(&lines);
+    let result_part_01 = part_01(&lines);
 
-    println!("{:?}", numbers);
+    let lines = fs::read_to_string("test-input-02.txt").unwrap();
+    let lines = lines.lines().collect();
+    let result_part_02 = part_02(&lines);
+
+    println!("{:?}", result_part_01);
+    println!("{:?}", result_part_02);
 }
 
 fn part_01(lines: &Vec<&str>) -> Vec<u32> {
@@ -27,9 +32,81 @@ fn get_associated_number(line: &str) -> u32 {
     number.parse::<u32>().unwrap()
 }
 
+fn part_02(lines: &Vec<&str>) -> Vec<u32> {
+    lines
+        .into_iter()
+        .map(|line| {
+            let first = get_first_associated_number(line).unwrap();
+            let last = match get_last_associated_number(line) {
+                Some(n) => n,
+                None => first,
+            };
+
+            format!("{}{}", first, last).parse::<u32>().unwrap()
+        })
+        .collect()
+}
+
+fn get_first_associated_number(line: &str) -> Option<u32> {
+    for (i, c) in line.chars().enumerate() {
+        if c.is_digit(10) {
+            return line.chars().nth(i).unwrap().to_digit(10);
+        } else if line[i..].starts_with("one") {
+            return Some(1);
+        } else if line[i..].starts_with("two") {
+            return Some(2);
+        } else if line[i..].starts_with("three") {
+            return Some(3);
+        } else if line[i..].starts_with("four") {
+            return Some(4);
+        } else if line[i..].starts_with("five") {
+            return Some(5);
+        } else if line[i..].starts_with("six") {
+            return Some(6);
+        } else if line[i..].starts_with("seven") {
+            return Some(7);
+        } else if line[i..].starts_with("eight") {
+            return Some(8);
+        } else if line[i..].starts_with("nine") {
+            return Some(9);
+        }
+    }
+
+    None
+}
+
+fn get_last_associated_number(linee: &str) -> Option<u32> {
+    let line = linee.chars().rev().collect::<String>();
+    for (i, c) in line.chars().enumerate() {
+        if c.is_digit(10) {
+            return line.chars().nth(i).unwrap().to_digit(10);
+        } else if line[i..].starts_with("eno") {
+            return Some(1);
+        } else if line[i..].starts_with("owt") {
+            return Some(2);
+        } else if line[i..].starts_with("eerht") {
+            return Some(3);
+        } else if line[i..].starts_with("ruof") {
+            return Some(4);
+        } else if line[i..].starts_with("evif") {
+            return Some(5);
+        } else if line[i..].starts_with("xis") {
+            return Some(6);
+        } else if line[i..].starts_with("neves") {
+            return Some(7);
+        } else if line[i..].starts_with("thgie") {
+            return Some(8);
+        } else if line[i..].starts_with("enin") {
+            return Some(9);
+        }
+    }
+
+    None
+}
+
 #[test]
 fn test_part_01_with_test_input() {
-    let lines = fs::read_to_string("test-input.txt").unwrap();
+    let lines = fs::read_to_string("test-input-01.txt").unwrap();
     let lines = lines.lines().collect();
     let numbers = part_01(&lines);
 
@@ -43,4 +120,22 @@ fn test_part_01_with_real_input() {
     let numbers = part_01(&lines);
 
     assert_eq!(numbers.into_iter().sum::<u32>(), 54667);
+}
+
+#[test]
+fn test_part_02_with_test_input() {
+    let lines = fs::read_to_string("test-input-02.txt").unwrap();
+    let lines = lines.lines().collect();
+    let numbers = part_02(&lines);
+
+    assert_eq!(numbers, vec![29, 83, 13, 24, 42, 14, 76]);
+}
+
+#[test]
+fn test_part_02_with_real_input() {
+    let lines = fs::read_to_string("input.txt").unwrap();
+    let lines = lines.lines().collect();
+    let numbers = part_02(&lines);
+
+    assert_eq!(numbers.into_iter().sum::<u32>(), 54203);
 }
