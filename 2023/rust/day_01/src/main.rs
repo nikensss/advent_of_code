@@ -16,20 +16,18 @@ fn main() {
 fn part_01(lines: &Vec<&str>) -> Vec<u32> {
     lines
         .into_iter()
-        .map(|line| get_associated_number(line))
+        .map(|line| {
+            let mut numbers = line.chars().filter(|c| c.is_digit(10));
+            let first = numbers.next().unwrap();
+            let last = match numbers.last() {
+                Some(n) => n,
+                None => first,
+            };
+
+            let number = format!("{}{}", first, last);
+            number.parse::<u32>().unwrap()
+        })
         .collect()
-}
-
-fn get_associated_number(line: &str) -> u32 {
-    let mut numbers = line.chars().filter(|c| c.is_digit(10));
-    let first = numbers.next().unwrap();
-    let last = match numbers.last() {
-        Some(n) => n,
-        None => first,
-    };
-
-    let number = format!("{}{}", first, last);
-    number.parse::<u32>().unwrap()
 }
 
 fn part_02(lines: &Vec<&str>) -> Vec<u32> {
@@ -49,25 +47,26 @@ fn part_02(lines: &Vec<&str>) -> Vec<u32> {
 
 fn get_first_associated_number(line: &str) -> Option<u32> {
     for (i, c) in line.chars().enumerate() {
+        let s = &line[i..];
         if c.is_digit(10) {
-            return line.chars().nth(i).unwrap().to_digit(10);
-        } else if line[i..].starts_with("one") {
+            return c.to_digit(10);
+        } else if s.starts_with("one") {
             return Some(1);
-        } else if line[i..].starts_with("two") {
+        } else if s.starts_with("two") {
             return Some(2);
-        } else if line[i..].starts_with("three") {
+        } else if s.starts_with("three") {
             return Some(3);
-        } else if line[i..].starts_with("four") {
+        } else if s.starts_with("four") {
             return Some(4);
-        } else if line[i..].starts_with("five") {
+        } else if s.starts_with("five") {
             return Some(5);
-        } else if line[i..].starts_with("six") {
+        } else if s.starts_with("six") {
             return Some(6);
-        } else if line[i..].starts_with("seven") {
+        } else if s.starts_with("seven") {
             return Some(7);
-        } else if line[i..].starts_with("eight") {
+        } else if s.starts_with("eight") {
             return Some(8);
-        } else if line[i..].starts_with("nine") {
+        } else if s.starts_with("nine") {
             return Some(9);
         }
     }
@@ -75,28 +74,30 @@ fn get_first_associated_number(line: &str) -> Option<u32> {
     None
 }
 
-fn get_last_associated_number(linee: &str) -> Option<u32> {
-    let line = linee.chars().rev().collect::<String>();
-    for (i, c) in line.chars().enumerate() {
+fn get_last_associated_number(line: &str) -> Option<u32> {
+    for i in (0..=line.len()).rev() {
+        let c = line.chars().nth(i - 1).unwrap();
+        let s = &line[..i];
+
         if c.is_digit(10) {
-            return line.chars().nth(i).unwrap().to_digit(10);
-        } else if line[i..].starts_with("eno") {
+            return c.to_digit(10);
+        } else if s.ends_with("one") {
             return Some(1);
-        } else if line[i..].starts_with("owt") {
+        } else if s.ends_with("two") {
             return Some(2);
-        } else if line[i..].starts_with("eerht") {
+        } else if s.ends_with("three") {
             return Some(3);
-        } else if line[i..].starts_with("ruof") {
+        } else if s.ends_with("four") {
             return Some(4);
-        } else if line[i..].starts_with("evif") {
+        } else if s.ends_with("five") {
             return Some(5);
-        } else if line[i..].starts_with("xis") {
+        } else if s.ends_with("six") {
             return Some(6);
-        } else if line[i..].starts_with("neves") {
+        } else if s.ends_with("seven") {
             return Some(7);
-        } else if line[i..].starts_with("thgie") {
+        } else if s.ends_with("eight") {
             return Some(8);
-        } else if line[i..].starts_with("enin") {
+        } else if s.ends_with("nine") {
             return Some(9);
         }
     }
