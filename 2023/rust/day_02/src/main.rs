@@ -1,5 +1,5 @@
 use nom::{bytes::complete::tag, bytes::complete::take_until};
-use std::{fs, str::FromStr};
+use std::{cmp, fs, str::FromStr};
 
 fn main() {
     let input = fs::read_to_string("test-input-01.txt").unwrap();
@@ -113,14 +113,9 @@ impl Set {
     }
 
     fn get_power(&self) -> usize {
-        self.cubes
-            .iter()
-            .map(|c| match c {
-                Cube::Red(amount) => amount,
-                Cube::Green(amount) => amount,
-                Cube::Blue(amount) => amount,
-            })
-            .fold(1, |a, b| a * b)
+        self.get_red_amount().unwrap_or(1)
+            * self.get_green_amount().unwrap_or(1)
+            * self.get_blue_amount().unwrap_or(1)
     }
 }
 
@@ -155,53 +150,26 @@ impl Game {
     }
 
     fn get_minimum_sets_of_cubes(&self) -> Set {
-        let mut red = Cube::Red(0);
-        let mut green = Cube::Green(0);
-        let mut blue = Cube::Blue(0);
+        let mut red = 0;
+        let mut green = 0;
+        let mut blue = 0;
 
         for set in &self.sets {
             if let Some(red_amount) = set.get_red_amount() {
-                red = match red {
-                    Cube::Red(amount) => {
-                        if amount > red_amount {
-                            Cube::Red(amount)
-                        } else {
-                            Cube::Red(red_amount)
-                        }
-                    }
-                    _ => unreachable!(),
-                };
+                red = cmp::max(red, red_amount);
             }
 
             if let Some(green_amount) = set.get_green_amount() {
-                green = match green {
-                    Cube::Green(amount) => {
-                        if amount > green_amount {
-                            Cube::Green(amount)
-                        } else {
-                            Cube::Green(green_amount)
-                        }
-                    }
-                    _ => unreachable!(),
-                };
+                green = cmp::max(green, green_amount);
             }
 
             if let Some(blue_amount) = set.get_blue_amount() {
-                blue = match blue {
-                    Cube::Blue(amount) => {
-                        if amount > blue_amount {
-                            Cube::Blue(amount)
-                        } else {
-                            Cube::Blue(blue_amount)
-                        }
-                    }
-                    _ => unreachable!(),
-                };
+                blue = cmp::max(blue, blue_amount);
             }
         }
 
         Set {
-            cubes: vec![red, green, blue],
+            cubes: vec![Cube::Red(red), Cube::Green(green), Cube::Blue(blue)],
         }
     }
 }
