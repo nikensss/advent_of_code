@@ -46,8 +46,9 @@ fn part_02(lines: &Vec<&str>) -> Vec<u32> {
 }
 
 fn get_first_associated_number(line: &str) -> Option<u32> {
-    for (i, c) in line.chars().enumerate() {
+    for (i, c) in line.char_indices() {
         let s = &line[i..];
+
         if c.is_digit(10) {
             return c.to_digit(10);
         } else if s.starts_with("one") {
@@ -75,9 +76,8 @@ fn get_first_associated_number(line: &str) -> Option<u32> {
 }
 
 fn get_last_associated_number(line: &str) -> Option<u32> {
-    for i in (0..=line.len()).rev() {
-        let c = line.chars().nth(i - 1).unwrap();
-        let s = &line[..i];
+    for (i, c) in line.char_indices().rev() {
+        let s = &line[..=i];
 
         if c.is_digit(10) {
             return c.to_digit(10);
