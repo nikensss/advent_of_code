@@ -36,6 +36,33 @@ enum Cube {
     Blue(usize),
 }
 
+impl Cube {
+    fn is_possible(&self) -> bool {
+        match self {
+            Cube::Red(amount) => amount <= &12,
+            Cube::Green(amount) => amount <= &13,
+            Cube::Blue(amount) => amount <= &14,
+        }
+    }
+
+    fn get_amount(&self) -> usize {
+        match self {
+            Cube::Red(amount) => *amount,
+            Cube::Green(amount) => *amount,
+            Cube::Blue(amount) => *amount,
+        }
+    }
+
+    fn is_same_color(&self, other: &Cube) -> bool {
+        match (self, other) {
+            (Cube::Red(_), Cube::Red(_)) => true,
+            (Cube::Green(_), Cube::Green(_)) => true,
+            (Cube::Blue(_), Cube::Blue(_)) => true,
+            _ => false,
+        }
+    }
+}
+
 impl FromStr for Cube {
     type Err = ();
 
@@ -53,16 +80,6 @@ impl FromStr for Cube {
     }
 }
 
-impl Cube {
-    fn is_possible(&self) -> bool {
-        match self {
-            Cube::Red(amount) => amount <= &12,
-            Cube::Green(amount) => amount <= &13,
-            Cube::Blue(amount) => amount <= &14,
-        }
-    }
-}
-
 #[derive(Debug)]
 struct Set {
     cubes: Vec<Cube>,
@@ -74,42 +91,22 @@ impl Set {
     }
 
     fn get_red_amount(&self) -> Option<usize> {
-        self.cubes
-            .iter()
-            .find(|c| match c {
-                Cube::Red(_) => true,
-                _ => false,
-            })
-            .map(|c| match c {
-                Cube::Red(amount) => *amount,
-                _ => unreachable!(),
-            })
+        self.get_color_amount(&Cube::Red(0))
     }
 
     fn get_green_amount(&self) -> Option<usize> {
-        self.cubes
-            .iter()
-            .find(|c| match c {
-                Cube::Green(_) => true,
-                _ => false,
-            })
-            .map(|c| match c {
-                Cube::Green(amount) => *amount,
-                _ => unreachable!(),
-            })
+        self.get_color_amount(&Cube::Green(0))
     }
 
     fn get_blue_amount(&self) -> Option<usize> {
+        self.get_color_amount(&Cube::Blue(0))
+    }
+
+    fn get_color_amount(&self, cube: &Cube) -> Option<usize> {
         self.cubes
             .iter()
-            .find(|c| match c {
-                Cube::Blue(_) => true,
-                _ => false,
-            })
-            .map(|c| match c {
-                Cube::Blue(amount) => *amount,
-                _ => unreachable!(),
-            })
+            .find(|c| c.is_same_color(cube))
+            .map(|c| c.get_amount())
     }
 
     fn get_power(&self) -> usize {
