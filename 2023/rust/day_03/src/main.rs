@@ -9,11 +9,8 @@ fn main() {
 }
 
 fn part_01(lines: &Vec<&str>) -> Result<isize, ParseIntError> {
-    let mut blocks = Vec::new();
+    let blocks = get_blocks(lines);
 
-    for (line_index, line_contents) in lines.iter().enumerate() {
-        blocks.append(&mut get_line_blocks(line_contents, line_index));
-    }
     let number_blocks_adjacent_to_symbols = blocks
         .iter()
         .filter(|b| b.r#type == BlockType::Number)
@@ -24,6 +21,16 @@ fn part_01(lines: &Vec<&str>) -> Result<isize, ParseIntError> {
         .iter()
         .map(|b| b.value.parse::<isize>().unwrap())
         .sum::<isize>())
+}
+
+fn get_blocks(lines: &Vec<&str>) -> Vec<Block> {
+    let mut blocks = Vec::new();
+
+    for (line_index, line_contents) in lines.iter().enumerate() {
+        blocks.append(&mut get_line_blocks(line_contents, line_index));
+    }
+
+    blocks
 }
 
 fn get_line_blocks(line: &str, line_index: usize) -> Vec<Block> {
