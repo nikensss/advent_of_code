@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 use nom::bytes::complete::tag;
 use nom::character::complete::{multispace0, multispace1, u32};
@@ -7,37 +7,38 @@ use nom::sequence::preceded;
 use nom::IResult;
 
 pub fn part_1(input: &str) -> usize {
-    let cards: Vec<Result<Card, String>> = input
+    let cards = get_cards(input);
+    let points: usize = cards.iter().map(|c| c.get_points()).sum();
+
+    points
+}
+
+pub fn part_2(input: &str) -> usize {
+    let cards = get_cards(input);
+    let mut card_counter = CardCounter::new(&cards);
+
+    for card in &cards {
+        card_counter.process_card(card);
+    }
+
+    card_counter.get_total_count()
+}
+
+fn get_cards(input: &str) -> Vec<Card> {
+    input
         .lines()
         .map(|line| {
             let parse_line_result = parse_line(line);
 
             match parse_line_result {
-                Ok((_, card)) => card,
+                Ok((_, card)) => match card {
+                    Ok(card) => card,
+                    Err(message) => panic!("could not build card: {}", message),
+                },
                 Err(message) => panic!("could not parse line: {}", message),
             }
         })
-        .collect();
-
-    let errors = cards
-        .iter()
-        .filter(|card| card.is_err())
-        .map(|err| err)
-        .collect::<Vec<_>>();
-
-    if errors.len() > 0 {
-        panic!("there are {} errors: {:?}", errors.len(), errors);
-    }
-
-    let points: usize = cards
-        .iter()
-        .filter_map(|c| match c {
-            Ok(card) => Some(card.get_points()),
-            Err(_) => None,
-        })
-        .sum();
-
-    points
+        .collect()
 }
 
 fn parse_line(input: &str) -> IResult<&str, Result<Card, String>> {
@@ -146,9 +147,13 @@ impl Card {
         self.id
     }
 
-    pub fn get_points(&self) -> usize {
+    pub fn get_total_matching_numbers(&self) -> usize {
         let owned_winning_nubmers = self.winning_numbers.intersection(&self.received_numbers);
-        let owned_winning_nubmers_count = owned_winning_nubmers.count();
+        owned_winning_nubmers.count()
+    }
+
+    pub fn get_points(&self) -> usize {
+        let owned_winning_nubmers_count = self.get_total_matching_numbers();
 
         if owned_winning_nubmers_count == 0 {
             return 0;
@@ -156,6 +161,72 @@ impl Card {
 
         let base: usize = 2;
         base.pow(owned_winning_nubmers_count as u32 - 1)
+    }
+}
+
+struct CardCount {
+    count: usize,
+}
+
+impl CardCount {
+    fn new() -> Self {
+        Self { count: 1 }
+    }
+
+    fn increase_count_by(&mut self, amount: usize) {
+        self.count += amount;
+    }
+}
+
+struct CardCounter {
+    counts: HashMap<usize, CardCount>,
+}
+
+impl CardCounter {
+    fn new(cards: &Vec<Card>) -> Self {
+        let counts = cards
+            .iter()
+            .map(|card| (card.get_id(), CardCount::new()))
+            .collect();
+
+        Self { counts }
+    }
+
+    fn get_total_count(&self) -> usize {
+        let mut total = 0;
+        for card_count in self.counts.values() {
+            total += card_count.count;
+        }
+        total
+    }
+
+    fn get_count(&self, id: usize) -> usize {
+        if let Some(card_count) = self.counts.get(&id) {
+            card_count.count
+        } else {
+            0
+        }
+    }
+
+    fn process_card(&mut self, card: &Card) {
+        let id = card.get_id();
+        let total_matching_numbers = card.get_total_matching_numbers();
+
+        if total_matching_numbers == 0 {
+            return;
+        }
+
+        for n in (id + 1)..=(id + total_matching_numbers) {
+            self.increase_count(n, self.get_count(id));
+        }
+    }
+
+    fn increase_count(&mut self, id: usize, amount: usize) {
+        if let Some(card_count) = self.counts.get_mut(&id) {
+            card_count.increase_count_by(amount);
+        } else {
+            self.counts.insert(id, CardCount::new());
+        }
     }
 }
 
@@ -601,5 +672,15 @@ mod tests {
     #[test]
     fn test_part_1_with_complete_input() {
         assert_eq!(part_1(COMPLETE_INPUT_01), 23028);
+    }
+
+    #[test]
+    fn test_part_2_with_test_input() {
+        assert_eq!(part_2(TEST_INPUT_01), 30);
+    }
+
+    #[test]
+    fn test_part_2_with_complete_input() {
+        assert_eq!(part_2(COMPLETE_INPUT_01), 9236992);
     }
 }
