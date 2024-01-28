@@ -1,3 +1,5 @@
+use std::{cmp, collections::HashMap, ops::Range};
+
 use nom::{
     bytes::complete::{tag, take_until},
     character::complete::{newline, space1, u64},
@@ -16,10 +18,25 @@ pub fn part_1(input: &str) -> Result<u64, String> {
         .ok_or("Failed to find closest seed location".to_string())
 }
 
+pub fn part_2(input: &str) -> Result<u64, String> {
+    let Ok((_, almanac)) = parse_almanac(input) else {
+        return Err("Failed to parse almanac".to_string());
+    };
+
+    almanac
+        .get_closest_location_for_range_of_seeds()
+        .ok_or("Failed to find closest seed location".to_string())
+}
+
 fn parse_almanac(input: &str) -> IResult<&str, Almanac> {
     let (input, seeds) = parse_seeds(input)?;
     let (input, _) = pair(newline, newline)(input)?;
     let (input, maps) = parse_almanac_maps(input)?;
+
+    let maps = maps
+        .into_iter()
+        .map(|map| (map.name.clone(), map))
+        .collect::<HashMap<_, _>>();
 
     Ok((input, Almanac { seeds, maps }))
 }
@@ -72,7 +89,7 @@ fn parse_almanac_range(input: &str) -> IResult<&str, AlmanacRange> {
 #[derive(Debug, Eq, PartialEq)]
 struct Almanac {
     seeds: Vec<u64>,
-    maps: Vec<AlmanacMap>,
+    maps: HashMap<String, AlmanacMap>,
 }
 
 impl Almanac {
@@ -84,56 +101,49 @@ impl Almanac {
     }
 
     fn get_seed_location(&self, seed: &u64) -> u64 {
-        let seed_to_soil_map = self
-            .maps
-            .iter()
-            .find(|map| map.name == "seed-to-soil")
-            .unwrap();
-        let soil = seed_to_soil_map.map(seed);
+        let value = self.get_map("seed-to-soil").map(seed);
+        let value = self.get_map("soil-to-fertilizer").map(&value);
+        let value = self.get_map("fertilizer-to-water").map(&value);
+        let value = self.get_map("water-to-light").map(&value);
+        let value = self.get_map("light-to-temperature").map(&value);
+        let value = self.get_map("temperature-to-humidity").map(&value);
+        let value = self.get_map("humidity-to-location").map(&value);
 
-        let soil_to_fertilizer_map = self
-            .maps
-            .iter()
-            .find(|map| map.name == "soil-to-fertilizer")
-            .unwrap();
-        let fertilizer = soil_to_fertilizer_map.map(&soil);
+        value
+    }
 
-        let fertilizer_to_water_map = self
-            .maps
-            .iter()
-            .find(|map| map.name == "fertilizer-to-water")
-            .unwrap();
-        let water = fertilizer_to_water_map.map(&fertilizer);
+    fn get_closest_location_for_range_of_seeds(&self) -> Option<u64> {
+        self.seeds
+            .as_slice()
+            .chunks(2)
+            .filter_map(|r| {
+                let start = r[0];
+                let length = r[1];
+                let end = start + length;
 
-        let water_to_light_map = self
-            .maps
-            .iter()
-            .find(|map| map.name == "water-to-light")
-            .unwrap();
-        let light = water_to_light_map.map(&water);
+                self.get_locations_for_range_of_seeds(start..end)
+            })
+            .flatten()
+            .map(|r| r.start)
+            .min()
+    }
 
-        let light_to_temperature_map = self
-            .maps
-            .iter()
-            .find(|map| map.name == "light-to-temperature")
-            .unwrap();
-        let temperature = light_to_temperature_map.map(&light);
+    fn get_locations_for_range_of_seeds(&self, range: Range<u64>) -> Option<Vec<Range<u64>>> {
+        let value = self.get_map("seed-to-soil").map_ranges(vec![range]);
+        let value = self.get_map("soil-to-fertilizer").map_ranges(value);
+        let value = self.get_map("fertilizer-to-water").map_ranges(value);
+        let value = self.get_map("water-to-light").map_ranges(value);
+        let value = self.get_map("light-to-temperature").map_ranges(value);
+        let value = self.get_map("temperature-to-humidity").map_ranges(value);
+        let value = self.get_map("humidity-to-location").map_ranges(value);
 
-        let temperature_to_humidity_map = self
-            .maps
-            .iter()
-            .find(|map| map.name == "temperature-to-humidity")
-            .unwrap();
-        let humidity = temperature_to_humidity_map.map(&temperature);
+        Some(value)
+    }
 
-        let humidity_to_location_map = self
-            .maps
-            .iter()
-            .find(|map| map.name == "humidity-to-location")
-            .unwrap();
-        let location = humidity_to_location_map.map(&humidity);
-
-        location
+    fn get_map(&self, map_name: &str) -> &AlmanacMap {
+        self.maps
+            .get(map_name)
+            .expect(format!("could not find '{}' map", map_name).as_str())
     }
 }
 
@@ -145,15 +155,82 @@ struct AlmanacMap {
 
 impl AlmanacMap {
     fn map(&self, seed: &u64) -> u64 {
-        let Some(range) = self.ranges.iter().find(|r| r.contains(seed)) else {
-            return *seed;
-        };
+        for range in &self.ranges {
+            if range.contains(seed) {
+                return range.map(seed);
+            }
+        }
+        return *seed;
+    }
 
-        range.map(seed)
+    fn map_ranges(&self, ranges: Vec<Range<u64>>) -> Vec<Range<u64>> {
+        ranges
+            .into_iter()
+            .map(|r| self.map_range(r))
+            .flatten()
+            .collect()
+    }
+
+    fn map_range(&self, range: Range<u64>) -> Vec<Range<u64>> {
+        let mut result = Vec::new();
+        let mut current_seed = range.start;
+
+        while range.contains(&current_seed) {
+            let range_mapper = match self.get_range_mapper(&current_seed) {
+                Some(range) => range,
+                None => self.create_range_mapper(current_seed..range.end),
+            };
+            let range = range_mapper.map_range(current_seed..range.end);
+            current_seed = current_seed + (range.end - range.start);
+            result.push(range);
+        }
+
+        result
+    }
+
+    fn get_range_mapper(&self, seed: &u64) -> Option<AlmanacRange> {
+        for range in self.ranges.as_slice() {
+            if range.contains(seed) {
+                return Some(range.clone());
+            }
+        }
+
+        None
+    }
+
+    fn create_range_mapper(&self, range: Range<u64>) -> AlmanacRange {
+        let start = range.start;
+
+        let end = self
+            .ranges
+            .iter()
+            .filter_map(|r| {
+                if r.source_start > start {
+                    return Some(r.source_start);
+                }
+                None
+            })
+            .min_by_key(|x| x - start);
+
+        if end.is_none() {
+            return AlmanacRange {
+                destination_starts: start,
+                source_start: start,
+                length: range.end - start,
+            };
+        }
+
+        let end = end.unwrap();
+
+        AlmanacRange {
+            destination_starts: start,
+            source_start: start,
+            length: end - start,
+        }
     }
 }
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq, Clone)]
 struct AlmanacRange {
     destination_starts: u64,
     source_start: u64,
@@ -167,6 +244,10 @@ impl AlmanacRange {
 
     fn map(&self, seed: &u64) -> u64 {
         self.destination_starts + (seed - self.source_start)
+    }
+
+    fn map_range(&self, range: Range<u64>) -> Range<u64> {
+        self.map(&range.start)..self.map(cmp::min(&(self.source_start + self.length), &range.end))
     }
 }
 
@@ -342,6 +423,9 @@ soil-to-fertilizer map:
                             ],
                         }
                     ]
+                    .into_iter()
+                    .map(|map| (map.name.clone(), map))
+                    .collect::<HashMap<_, _>>()
                 }
             ))
         )
@@ -355,5 +439,15 @@ soil-to-fertilizer map:
     #[test]
     fn test_part_1_with_complete_input() {
         assert_eq!(part_1(COMPLETE_INPUT), Ok(462648396));
+    }
+
+    #[test]
+    fn test_part_2_with_test_input() {
+        assert_eq!(part_2(TEST_INPUT), Ok(46));
+    }
+
+    #[test]
+    fn test_part_2_with_complete_input() {
+        assert_eq!(part_2(COMPLETE_INPUT), Ok(2520479));
     }
 }
