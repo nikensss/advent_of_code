@@ -1,8 +1,10 @@
 use nom::{
+    branch::alt,
     bytes::complete::tag,
-    character::complete::{multispace1, newline, u64},
+    character::complete::{digit1, line_ending, multispace1, newline, u64},
+    combinator::eof,
     multi::separated_list1,
-    sequence::preceded,
+    sequence::{preceded, terminated},
     IResult,
 };
 
@@ -17,8 +19,7 @@ impl Race {
         let mut possible_ways_to_win = 0;
 
         for i in 0..=self.time {
-            let speed = i;
-            let time_left = self.time - i;
+            let (speed, time_left) = (i, self.time - i);
             let distance = speed * time_left;
             if distance > self.record_distance {
                 possible_ways_to_win += 1;
@@ -73,6 +74,47 @@ fn parse_distance(input: &str) -> IResult<&str, Vec<u64>> {
 
 fn parse_numbers(input: &str) -> IResult<&str, Vec<u64>> {
     preceded(multispace1, separated_list1(multispace1, u64))(input)
+}
+
+pub fn part_2(input: &str) -> Result<u64, String> {
+    let Ok((_, race)) = parse_input_as_one_number(input) else {
+        return Err("Failed to parse input".to_string());
+    };
+
+    Ok(race.count_possible_ways_to_win())
+}
+
+fn parse_input_as_one_number(input: &str) -> IResult<&str, Race> {
+    let (input, time) = parse_time_as_one_number(input)?;
+    let (input, distance) = parse_distance_as_one_number(input)?;
+
+    Ok((
+        input,
+        Race {
+            time,
+            record_distance: distance,
+        },
+    ))
+}
+fn parse_time_as_one_number(input: &str) -> IResult<&str, u64> {
+    let (input, _) = tag("Time:")(input)?;
+    let (input, chars) = parse_as_one_number(input)?;
+
+    Ok((input, chars.concat().parse().unwrap()))
+}
+
+fn parse_distance_as_one_number(input: &str) -> IResult<&str, u64> {
+    let (input, _) = tag("Distance:")(input)?;
+    let (input, chars) = parse_as_one_number(input)?;
+
+    Ok((input, chars.concat().parse().unwrap()))
+}
+
+fn parse_as_one_number(input: &str) -> IResult<&str, Vec<&str>> {
+    terminated(
+        preceded(multispace1, separated_list1(multispace1, digit1)),
+        alt((line_ending, eof)),
+    )(input)
 }
 
 #[cfg(test)]
@@ -149,5 +191,44 @@ Distance:  9  40  200"#;
     #[test]
     fn test_part_1_with_complete_input() {
         assert_eq!(part_1(COMPLETE_INPUT), Ok(3317888));
+    }
+
+    #[test]
+    fn test_parse_time_as_one_number() {
+        let input = r#"Time:      7  15   30"#;
+        assert_eq!(parse_time_as_one_number(input), Ok(("", 71530)));
+    }
+
+    #[test]
+    fn test_parse_distance_as_one_number() {
+        let input = r#"Distance:  9  40  200"#;
+        assert_eq!(parse_distance_as_one_number(input), Ok(("", 940200)));
+    }
+
+    #[test]
+    fn test_parse_input_as_one_number() {
+        let input = r#"Time:      7  15   30
+Distance:  9  40  200"#;
+
+        assert_eq!(
+            parse_input_as_one_number(input),
+            Ok((
+                "",
+                Race {
+                    time: 71530,
+                    record_distance: 940200
+                }
+            ))
+        );
+    }
+
+    #[test]
+    fn test_part_2_with_test_input() {
+        assert_eq!(part_2(TEST_INPUT), Ok(71503));
+    }
+
+    #[test]
+    fn test_part_2_with_complete_input() {
+        assert_eq!(part_2(COMPLETE_INPUT), Ok(24655068));
     }
 }
