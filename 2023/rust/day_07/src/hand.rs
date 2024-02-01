@@ -76,6 +76,97 @@ impl Hand {
         HandType::HighCard
     }
 
+    pub fn is_stronger_than_with_joker(&self, other: &Hand) -> bool {
+        let self_hand_type = self.get_hand_type_with_joker();
+        let other_hand_type = other.get_hand_type_with_joker();
+
+        if self_hand_type.is_stronger_than(&other_hand_type) {
+            return true;
+        }
+
+        if other_hand_type.is_stronger_than(&self_hand_type) {
+            return false;
+        }
+
+        let cards = self.cards.iter().zip(other.cards.iter());
+        for (self_card, other_card) in cards {
+            if self_card.is_stronger_than_with_joker(other_card) {
+                return true;
+            }
+            if other_card.is_stronger_than_with_joker(self_card) {
+                return false;
+            }
+        }
+
+        false
+    }
+
+    pub fn get_hand_type_with_joker(&self) -> HandType {
+        let mut card_type_count: HashMap<&Card, usize> = HashMap::new();
+        for card in self.cards.iter() {
+            let count = card_type_count.entry(card).or_insert(0);
+            *count += 1;
+        }
+
+        let mut key_value_tuples = card_type_count
+            .iter()
+            .map(|(k, v)| (*k, *v))
+            .collect::<Vec<_>>();
+
+        // get the amount of jokers
+        let jokers = match key_value_tuples.iter().find(|(k, _)| k.is_joker()) {
+            Some((_, v)) => *v,
+            None => 0,
+        };
+
+        // remove the jokers from the list
+        key_value_tuples = key_value_tuples
+            .into_iter()
+            .filter(|(k, _)| !k.is_joker())
+            .collect::<Vec<_>>();
+
+        if key_value_tuples.len() == 0 {
+            return HandType::FiveOfAKind;
+        }
+
+        key_value_tuples.sort_by(|a, b| b.1.cmp(&a.1));
+
+        key_value_tuples[0].1 += jokers;
+
+        let mut values = key_value_tuples
+            .iter()
+            .map(|(_, v)| *v)
+            .collect::<Vec<usize>>();
+
+        values.sort_by(|a, b| b.cmp(a));
+
+        if values[0] == 5 {
+            return HandType::FiveOfAKind;
+        }
+
+        if values[0] == 4 {
+            return HandType::FourOfAKind;
+        }
+
+        if values[0] == 3 && values[1] == 2 {
+            return HandType::FullHouse;
+        }
+
+        if values[0] == 3 && values[1] == 1 && values[2] == 1 {
+            return HandType::ThreeOfAKind;
+        }
+
+        if values[0] == 2 && values[1] == 2 && values[2] == 1 {
+            return HandType::TwoPair;
+        }
+
+        if values[0] == 2 && values[1] == 1 && values[2] == 1 && values[3] == 1 {
+            return HandType::OnePair;
+        }
+
+        HandType::HighCard
+    }
+
     pub fn get_bid(&self) -> usize {
         self.bid
     }
@@ -358,6 +449,118 @@ mod tests {
                         .collect(),
                     bid: 2,
                 },
+            ]
+        );
+    }
+
+    #[test]
+    fn test_hand_type_with_joker() {
+        let hand = Hand {
+            cards: "QQQJA"
+                .to_string()
+                .chars()
+                .map(|c| c.to_string().parse::<Card>().unwrap())
+                .collect(),
+            bid: 1,
+        };
+        assert_eq!(hand.get_hand_type_with_joker(), HandType::FourOfAKind);
+
+        let hand = Hand {
+            cards: "KQQJA"
+                .to_string()
+                .chars()
+                .map(|c| c.to_string().parse::<Card>().unwrap())
+                .collect(),
+            bid: 2,
+        };
+        assert_eq!(hand.get_hand_type_with_joker(), HandType::ThreeOfAKind);
+
+        let hand = Hand {
+            cards: "QQAJA"
+                .to_string()
+                .chars()
+                .map(|c| c.to_string().parse::<Card>().unwrap())
+                .collect(),
+            bid: 3,
+        };
+        assert_eq!(hand.get_hand_type_with_joker(), HandType::FullHouse);
+
+        let hand = Hand {
+            cards: "JJJJJ"
+                .to_string()
+                .chars()
+                .map(|c| c.to_string().parse::<Card>().unwrap())
+                .collect(),
+            bid: 4,
+        };
+        assert_eq!(hand.get_hand_type_with_joker(), HandType::FiveOfAKind);
+
+        let hand = Hand {
+            cards: vec![
+                "K".parse::<Card>().unwrap(),
+                "T".parse::<Card>().unwrap(),
+                "J".parse::<Card>().unwrap(),
+                "J".parse::<Card>().unwrap(),
+                "T".parse::<Card>().unwrap(),
+            ],
+            bid: 5,
+        };
+        assert_eq!(hand.get_hand_type_with_joker(), HandType::FourOfAKind);
+
+        let hands = vec![
+            Hand {
+                cards: "32TK3"
+                    .to_string()
+                    .chars()
+                    .map(|c| c.to_string().parse::<Card>().unwrap())
+                    .collect(),
+                bid: 1,
+            },
+            Hand {
+                cards: "T55J5"
+                    .to_string()
+                    .chars()
+                    .map(|c| c.to_string().parse::<Card>().unwrap())
+                    .collect(),
+                bid: 1,
+            },
+            Hand {
+                cards: "KK677"
+                    .to_string()
+                    .chars()
+                    .map(|c| c.to_string().parse::<Card>().unwrap())
+                    .collect(),
+                bid: 1,
+            },
+            Hand {
+                cards: "KTJJT"
+                    .to_string()
+                    .chars()
+                    .map(|c| c.to_string().parse::<Card>().unwrap())
+                    .collect(),
+                bid: 1,
+            },
+            Hand {
+                cards: "QQQJA"
+                    .to_string()
+                    .chars()
+                    .map(|c| c.to_string().parse::<Card>().unwrap())
+                    .collect(),
+                bid: 2,
+            },
+        ];
+
+        assert_eq!(
+            hands
+                .iter()
+                .map(|h| h.get_hand_type_with_joker())
+                .collect::<Vec<_>>(),
+            vec![
+                HandType::OnePair,
+                HandType::FourOfAKind,
+                HandType::TwoPair,
+                HandType::FourOfAKind,
+                HandType::FourOfAKind,
             ]
         );
     }

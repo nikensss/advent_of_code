@@ -2,6 +2,8 @@ mod card;
 mod hand;
 mod hand_type;
 
+use std::cmp::Ordering;
+
 use crate::card::Card;
 use hand::Hand;
 use nom::{
@@ -15,6 +17,28 @@ pub fn part_1(input: &str) -> usize {
     let (_, mut hands) = parse_input(input).unwrap();
 
     hands.sort();
+    hands
+        .iter()
+        .enumerate()
+        .map(|(i, h)| (i + 1) * h.get_bid())
+        .sum()
+}
+
+pub fn part_2(input: &str) -> usize {
+    let (_, mut hands) = parse_input(input).unwrap();
+
+    hands.sort_by(|a, b| {
+        if a.is_stronger_than_with_joker(&b) {
+            return Ordering::Greater;
+        }
+
+        if b.is_stronger_than_with_joker(&a) {
+            return Ordering::Less;
+        }
+
+        return Ordering::Equal;
+    });
+
     hands
         .iter()
         .enumerate()
@@ -83,5 +107,15 @@ mod tests {
     #[test]
     fn test_part_1_with_complete_input() {
         assert_eq!(part_1(COMPLETE_INPUT), 247815719);
+    }
+
+    #[test]
+    fn test_part_2_with_test_input() {
+        assert_eq!(part_2(TEST_INPUT), 5905);
+    }
+
+    #[test]
+    fn test_part_2_with_complete_input() {
+        assert_eq!(part_2(COMPLETE_INPUT), 248747492);
     }
 }

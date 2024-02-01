@@ -88,6 +88,22 @@ impl Card {
     pub fn is_stronger_than(&self, other: &Card) -> bool {
         self.strength > other.strength
     }
+
+    pub fn is_stronger_than_with_joker(&self, other: &Card) -> bool {
+        if self.is_joker() {
+            return false;
+        }
+
+        if other.is_joker() {
+            return true;
+        }
+
+        self.is_stronger_than(other)
+    }
+
+    pub fn is_joker(&self) -> bool {
+        self.label == "J"
+    }
 }
 
 #[cfg(test)]
@@ -148,5 +164,19 @@ mod tests {
         assert_eq!(cards[1].label, "4");
         assert_eq!(cards[2].label, "T");
         assert_eq!(cards[3].label, "A");
+    }
+
+    #[test]
+    fn test_is_stronger_than_with_joker() {
+        let cards = vec![
+            "4".parse::<Card>().unwrap(),
+            "J".parse::<Card>().unwrap(),
+            "T".parse::<Card>().unwrap(),
+            "2".parse::<Card>().unwrap(),
+        ];
+
+        assert!(cards[0].is_stronger_than_with_joker(&cards[1]));
+        assert!(cards[2].is_stronger_than_with_joker(&cards[1]));
+        assert!(cards[3].is_stronger_than_with_joker(&cards[1]));
     }
 }
