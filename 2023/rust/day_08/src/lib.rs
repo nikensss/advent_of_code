@@ -11,6 +11,7 @@ use nom::{
     sequence::pair,
     IResult,
 };
+use num::integer::lcm;
 
 mod instruction;
 mod node;
@@ -25,8 +26,16 @@ pub fn part_1(input: &str) -> usize {
         Err(e) => panic!("Error: {:?}", e),
     };
 
-    let nodes = connect_nodes(nodes);
-    follow_instructions(instructions, nodes)
+    follow_instructions(instructions, connect_nodes(nodes))
+}
+
+pub fn part_2(input: &str) -> usize {
+    let (_, (instructions, nodes)) = match parse_input(input) {
+        Ok((input, instructions)) => (input, instructions),
+        Err(e) => panic!("Error: {:?}", e),
+    };
+
+    follow_instructions_as_ghost(instructions, connect_nodes(nodes))
 }
 
 fn connect_nodes(nodes: Vec<Rc<RefCell<Node>>>) -> Vec<Rc<RefCell<Node>>> {
@@ -86,6 +95,42 @@ fn follow_instructions(instructions: Vec<Instruction>, nodes: Vec<Rc<RefCell<Nod
     steps
 }
 
+fn follow_instructions_as_ghost(
+    instructions: Vec<Instruction>,
+    nodes: Vec<Rc<RefCell<Node>>>,
+) -> usize {
+    nodes
+        .iter()
+        .filter(|n| n.borrow().is_start_for_ghost())
+        .map(|n| follow_instructions_as_ghost_for_node(n.clone(), &instructions))
+        .fold(1, |acc, x| lcm(acc, x))
+}
+
+fn follow_instructions_as_ghost_for_node(
+    node: Rc<RefCell<Node>>,
+    instructions: &Vec<Instruction>,
+) -> usize {
+    let mut current_node = node;
+    let mut steps = 0;
+
+    loop {
+        if current_node.borrow().is_end_for_ghost() {
+            break;
+        }
+        let instruction = &instructions[steps % instructions.len()];
+        let next_node = current_node.borrow().take(instruction);
+
+        if next_node.is_none() {
+            break;
+        }
+
+        current_node = next_node.unwrap();
+        steps += 1;
+    }
+
+    steps
+}
+
 fn parse_input(input: &str) -> IResult<&str, (Vec<Instruction>, Vec<Rc<RefCell<Node>>>)> {
     let (input, instructions) = parse_instructions(input)?;
     let (input, nodes) = parse_node_lines(input)?;
@@ -137,6 +182,7 @@ mod tests {
 
     const TEST_INPUT_1: &str = include_str!("../test_input_1.txt");
     const TEST_INPUT_2: &str = include_str!("../test_input_2.txt");
+    const TEST_INPUT_3: &str = include_str!("../test_input_3.txt");
     const COMPLETE_INPUT: &str = include_str!("../complete_input.txt");
 
     #[test]
@@ -272,5 +318,15 @@ mod tests {
     #[test]
     fn test_part_1_with_complete_input() {
         assert_eq!(part_1(COMPLETE_INPUT), 18673);
+    }
+
+    #[test]
+    fn test_part_2_with_test_input() {
+        assert_eq!(part_2(TEST_INPUT_3), 6);
+    }
+
+    #[test]
+    fn test_part_2_with_complete_input() {
+        assert_eq!(part_2(COMPLETE_INPUT), 17_972_669_116_327);
     }
 }

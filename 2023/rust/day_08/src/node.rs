@@ -62,6 +62,14 @@ impl Node {
     pub fn is_end(&self) -> bool {
         self.id == "ZZZ"
     }
+
+    pub fn is_start_for_ghost(&self) -> bool {
+        self.id.ends_with("A")
+    }
+
+    pub fn is_end_for_ghost(&self) -> bool {
+        self.id.ends_with("Z")
+    }
 }
 
 impl Display for Node {
