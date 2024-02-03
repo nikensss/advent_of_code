@@ -14,15 +14,37 @@ pub fn part_1(input: &str) -> i64 {
 
     oasis_report
         .into_iter()
-        .map(|x| predict_next_value(x))
+        .map(|x| extrapolate_forward(x))
         .sum()
 }
 
-fn predict_next_value(report_line: Vec<i64>) -> i64 {
+fn extrapolate_forward(report_line: Vec<i64>) -> i64 {
     let mut iterations = process_report_line(report_line);
     iterations.last_mut().unwrap().push(0);
 
     iterations.iter().map(|x| x.iter().last().unwrap()).sum()
+}
+
+pub fn part_2(input: &str) -> i64 {
+    let Ok((_, oasis_report)) = parse_input(input) else {
+        panic!("Failed to parse input: {:?}", input);
+    };
+
+    oasis_report
+        .into_iter()
+        .map(|x| extrapolate_backwards(x))
+        .sum()
+}
+
+fn extrapolate_backwards(report_line: Vec<i64>) -> i64 {
+    let mut iterations = process_report_line(report_line);
+    iterations.last_mut().unwrap().insert(0, 0);
+
+    iterations
+        .into_iter()
+        .map(|x| x.into_iter().next().unwrap())
+        .rev()
+        .fold(0, |acc, x| x - acc)
 }
 
 fn process_report_line(report_line: Vec<i64>) -> Vec<Vec<i64>> {
@@ -101,15 +123,15 @@ mod tests {
     #[test]
     fn test_process_report_line() {
         let input: Vec<i64> = vec![1, 3, 6, 10, 15, 21];
-        let result = predict_next_value(input);
+        let result = extrapolate_forward(input);
         assert_eq!(result, 28);
 
         let input: Vec<i64> = vec![0, 3, 6, 9, 12, 15];
-        let result = predict_next_value(input);
+        let result = extrapolate_forward(input);
         assert_eq!(result, 18);
 
         let input: Vec<i64> = vec![10, 13, 16, 21, 30, 45];
-        let result = predict_next_value(input);
+        let result = extrapolate_forward(input);
         assert_eq!(result, 68);
     }
 
@@ -121,5 +143,15 @@ mod tests {
     #[test]
     fn test_part_1_with_complete_input() {
         assert_eq!(part_1(COMPLETE_INPUT), 2101499000);
+    }
+
+    #[test]
+    fn test_part_2_with_test_input() {
+        assert_eq!(part_2(TEST_INPUT), 2);
+    }
+
+    #[test]
+    fn test_part_2_with_complete_input() {
+        assert_eq!(part_2(COMPLETE_INPUT), 1089);
     }
 }
