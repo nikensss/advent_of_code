@@ -13,12 +13,19 @@ pub fn part_1(input: &str) -> i64 {
     };
 
     oasis_report
-        .iter()
-        .map(|x| process_report_line(x.to_vec()))
+        .into_iter()
+        .map(|x| predict_next_value(x))
         .sum()
 }
 
-fn process_report_line(report_line: Vec<i64>) -> i64 {
+fn predict_next_value(report_line: Vec<i64>) -> i64 {
+    let mut iterations = process_report_line(report_line);
+    iterations.last_mut().unwrap().push(0);
+
+    iterations.iter().map(|x| x.iter().last().unwrap()).sum()
+}
+
+fn process_report_line(report_line: Vec<i64>) -> Vec<Vec<i64>> {
     let mut iterations: Vec<Vec<i64>> = vec![report_line];
 
     while !iterations.last().unwrap().iter().all(|x| *x == 0) {
@@ -27,9 +34,7 @@ fn process_report_line(report_line: Vec<i64>) -> i64 {
         iterations.push(next);
     }
 
-    iterations.last_mut().unwrap().push(0);
-
-    iterations.iter().map(|x| x.iter().last().unwrap()).sum()
+    iterations
 }
 
 fn process_report_line_iteration(report_line_iteration: &Vec<i64>) -> Vec<i64> {
@@ -96,15 +101,15 @@ mod tests {
     #[test]
     fn test_process_report_line() {
         let input: Vec<i64> = vec![1, 3, 6, 10, 15, 21];
-        let result = process_report_line(input);
+        let result = predict_next_value(input);
         assert_eq!(result, 28);
 
         let input: Vec<i64> = vec![0, 3, 6, 9, 12, 15];
-        let result = process_report_line(input);
+        let result = predict_next_value(input);
         assert_eq!(result, 18);
 
         let input: Vec<i64> = vec![10, 13, 16, 21, 30, 45];
-        let result = process_report_line(input);
+        let result = predict_next_value(input);
         assert_eq!(result, 68);
     }
 
