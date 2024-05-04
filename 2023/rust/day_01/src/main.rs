@@ -15,9 +15,9 @@ fn main() {
 
 fn part_01(lines: &Vec<&str>) -> Vec<u32> {
     lines
-        .into_iter()
+        .iter()
         .map(|line| {
-            let mut numbers = line.chars().filter(|c| c.is_digit(10));
+            let mut numbers = line.chars().filter(|c| c.is_ascii_digit());
             let first = numbers.next().unwrap();
             let last = match numbers.last() {
                 Some(n) => n,
@@ -32,7 +32,7 @@ fn part_01(lines: &Vec<&str>) -> Vec<u32> {
 
 fn part_02(lines: &Vec<&str>) -> Vec<u32> {
     lines
-        .into_iter()
+        .iter()
         .map(|line| {
             let first = get_first_associated_number(line).unwrap();
             let last = match get_last_associated_number(line) {
@@ -49,7 +49,7 @@ fn get_first_associated_number(line: &str) -> Option<u32> {
     for (i, c) in line.char_indices() {
         let s = &line[i..];
 
-        if c.is_digit(10) {
+        if c.is_ascii_digit() {
             return c.to_digit(10);
         } else if s.starts_with("one") {
             return Some(1);
@@ -79,7 +79,7 @@ fn get_last_associated_number(line: &str) -> Option<u32> {
     for (i, c) in line.char_indices().rev() {
         let s = &line[..=i];
 
-        if c.is_digit(10) {
+        if c.is_ascii_digit() {
             return c.to_digit(10);
         } else if s.ends_with("one") {
             return Some(1);

@@ -28,15 +28,15 @@ pub fn part_2(input: &str) -> usize {
     let (_, mut hands) = parse_input(input).unwrap();
 
     hands.sort_by(|a, b| {
-        if a.is_stronger_than_with_joker(&b) {
+        if a.is_stronger_than_with_joker(b) {
             return Ordering::Greater;
         }
 
-        if b.is_stronger_than_with_joker(&a) {
+        if b.is_stronger_than_with_joker(a) {
             return Ordering::Less;
         }
 
-        return Ordering::Equal;
+        Ordering::Equal
     });
 
     hands
