@@ -1,9 +1,12 @@
+mod pipe_type;
+pub use pipe_type::PipeType;
+
 use std::{
     cell::RefCell,
     rc::{Rc, Weak},
 };
 
-use crate::{direction::Direction, pipe_type::PipeType};
+use crate::direction::Direction;
 
 #[derive(Debug)]
 pub struct Pipe {
@@ -20,10 +23,7 @@ pub struct Pipe {
 
 impl PartialEq for Pipe {
     fn eq(&self, other: &Self) -> bool {
-        self.pipe_type == other.pipe_type
-            && self.x == other.x
-            && self.y == other.y
-            && self.pipe_type == other.pipe_type
+        self.pipe_type == other.pipe_type && self.x == other.x && self.y == other.y
     }
 }
 
@@ -114,7 +114,7 @@ impl Pipe {
 
                 let north = (*north).borrow();
 
-                return north.goes(&Direction::South);
+                north.goes(&Direction::South)
             }
             Direction::East => {
                 let Some(east) = &self.east else {
@@ -126,7 +126,7 @@ impl Pipe {
                 };
 
                 let east = (*east).borrow();
-                return east.goes(&Direction::West);
+                east.goes(&Direction::West)
             }
             Direction::South => {
                 let Some(south) = &self.south else {
@@ -138,7 +138,7 @@ impl Pipe {
                 };
 
                 let south = (*south).borrow();
-                return south.goes(&Direction::North);
+                south.goes(&Direction::North)
             }
             Direction::West => {
                 let Some(west) = &self.west else {
@@ -150,7 +150,7 @@ impl Pipe {
                 };
 
                 let west = (*west).borrow();
-                return west.goes(&Direction::East);
+                west.goes(&Direction::East)
             }
         }
     }

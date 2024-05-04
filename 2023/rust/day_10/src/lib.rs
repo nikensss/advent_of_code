@@ -1,11 +1,10 @@
+mod direction;
+mod pipe;
+
 use std::{cell::RefCell, rc::Rc};
 
 use direction::Direction;
 use pipe::Pipe;
-
-mod direction;
-mod pipe;
-mod pipe_type;
 
 pub fn part_1(input: &str) -> usize {
     let pipes = connect_pipes(parse_input(input));
@@ -165,8 +164,8 @@ mod tests {
         assert!(start.goes(&Direction::East));
         assert!(start.goes(&Direction::South));
 
-        assert_eq!(start.goes(&Direction::North), false);
-        assert_eq!(start.goes(&Direction::West), false);
+        assert!(!start.goes(&Direction::North));
+        assert!(!start.goes(&Direction::West));
     }
 
     #[test]
