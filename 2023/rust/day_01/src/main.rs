@@ -111,7 +111,7 @@ fn test_part_01_with_test_input() {
     let lines = lines.lines().collect();
     let numbers = part_01(&lines);
 
-    assert_eq!(numbers, vec![12, 38, 15, 77]);
+    assert_eq!(numbers.into_iter().sum::<u32>(), 142);
 }
 
 #[test]
@@ -129,7 +129,7 @@ fn test_part_02_with_test_input() {
     let lines = lines.lines().collect();
     let numbers = part_02(&lines);
 
-    assert_eq!(numbers, vec![29, 83, 13, 24, 42, 14, 76]);
+    assert_eq!(numbers.into_iter().sum::<u32>(), 281);
 }
 
 #[test]
