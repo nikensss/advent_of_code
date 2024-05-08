@@ -1,8 +1,12 @@
+mod pipe_status;
 mod pipe_type;
+
+pub use pipe_status::PipeStatus;
 pub use pipe_type::PipeType;
 
 use std::{
     cell::RefCell,
+    fmt::Display,
     rc::{Rc, Weak},
 };
 
@@ -12,6 +16,8 @@ use crate::direction::Direction;
 pub struct Pipe {
     pipe_type: PipeType,
 
+    pipe_status: Option<PipeStatus>,
+
     x: usize,
     y: usize,
 
@@ -19,6 +25,20 @@ pub struct Pipe {
     east: Option<Weak<RefCell<Pipe>>>,
     south: Option<Weak<RefCell<Pipe>>>,
     west: Option<Weak<RefCell<Pipe>>>,
+}
+
+impl Display for Pipe {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let pipe_status = match &self.pipe_status {
+            Some(status) => format!("{}", status),
+            None => "U".to_string(),
+        };
+        write!(
+            f,
+            "{} @{} ({}, {})",
+            self.pipe_type, pipe_status, self.x, self.y
+        )
+    }
 }
 
 impl PartialEq for Pipe {
@@ -31,8 +51,15 @@ impl Eq for Pipe {}
 
 impl Pipe {
     pub fn new(pipe_type: PipeType, x: usize, y: usize) -> Rc<RefCell<Pipe>> {
+        let pipe_status = if pipe_type == PipeType::Start {
+            Some(PipeStatus::MainLoop)
+        } else {
+            None
+        };
+
         Rc::new(RefCell::new(Pipe {
             pipe_type,
+            pipe_status,
             x,
             y,
             north: None,
@@ -48,6 +75,14 @@ impl Pipe {
 
     fn is_ground(&self) -> bool {
         self.pipe_type == PipeType::Ground
+    }
+
+    pub fn set_status(&mut self, status: PipeStatus) {
+        self.pipe_status = Some(status);
+    }
+
+    pub fn is_in_main_loop(&self) -> bool {
+        matches!(self.pipe_status, Some(PipeStatus::MainLoop))
     }
 
     pub fn set_pipe(&mut self, direction: &Direction, pipe: Rc<RefCell<Pipe>>) {
@@ -183,5 +218,56 @@ impl Pipe {
 
     pub fn get_coordinates(&self) -> (usize, usize) {
         (self.x, self.y)
+    }
+
+    pub fn get_loop(&self) -> Vec<Rc<RefCell<Pipe>>> {
+        let mut loop_pipes = vec![];
+
+        loop_pipes.push(
+            self.get_connected_pipes()
+                .pop()
+                .unwrap()
+                .1
+                .upgrade()
+                .unwrap(),
+        );
+
+        let mut candidates = loop_pipes.last().unwrap().borrow().get_connected_pipes();
+
+        loop {
+            if candidates.is_empty() {
+                return loop_pipes;
+            }
+
+            let mut next_candidates = vec![];
+            for candidate in candidates.iter() {
+                let candidate = candidate.1.upgrade().unwrap();
+
+                if loop_pipes.len() == 1
+                    && candidate.borrow().get_coordinates() == self.get_coordinates()
+                {
+                    continue;
+                }
+
+                if loop_pipes
+                    .iter()
+                    .any(|p| p.borrow().get_coordinates() == candidate.borrow().get_coordinates())
+                {
+                    continue;
+                }
+
+                if loop_pipes
+                    .iter()
+                    .all(|p| p.borrow().get_coordinates() == candidate.borrow().get_coordinates())
+                {
+                    return loop_pipes;
+                }
+
+                loop_pipes.push(candidate.clone());
+
+                next_candidates.append(&mut candidate.borrow().get_connected_pipes());
+            }
+            candidates = next_candidates;
+        }
     }
 }

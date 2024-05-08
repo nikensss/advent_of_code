@@ -5,12 +5,19 @@ use std::{cell::RefCell, rc::Rc};
 
 use direction::Direction;
 use pipe::Pipe;
+use pipe::PipeStatus;
 
 pub fn part_1(input: &str) -> usize {
     let pipes = connect_pipes(parse_input(input));
     let start = pipes.iter().find(|pipe| pipe.borrow().is_start()).unwrap();
 
     find_steps_to_farthest_pipe(start)
+}
+
+pub fn part_2(input: &str) -> usize {
+    let pipes = connect_pipes(parse_input(input));
+
+    count_enclosed(&pipes)
 }
 
 fn find_steps_to_farthest_pipe(start: &Rc<RefCell<Pipe>>) -> usize {
@@ -113,12 +120,59 @@ fn connect_pipes(pipes: Vec<Rc<RefCell<Pipe>>>) -> Vec<Rc<RefCell<Pipe>>> {
     pipes
 }
 
+fn count_enclosed(pipes: &Vec<Rc<RefCell<Pipe>>>) -> usize {
+    let start = pipes.iter().find(|pipe| pipe.borrow().is_start()).unwrap();
+    for pipe in start.borrow().get_loop().into_iter() {
+        if let Ok(mut pipe) = pipe.try_borrow_mut() {
+            pipe.set_status(PipeStatus::MainLoop);
+        }
+    }
+
+    let mut enclosed = 0;
+
+    let mut main_loop = vec![start.clone()];
+    main_loop.append(&mut start.borrow().get_loop());
+    let main_loop = main_loop;
+
+    for pipe in pipes {
+        if pipe.borrow().is_in_main_loop() {
+            continue;
+        }
+
+        if is_enclosed(pipe.clone(), &main_loop) {
+            enclosed += 1;
+        }
+    }
+
+    enclosed
+}
+
+fn is_enclosed(pipe: Rc<RefCell<Pipe>>, main_loop: &Vec<Rc<RefCell<Pipe>>>) -> bool {
+    println!("checking if pipe {} is enclosed", pipe.borrow());
+
+    let (x, y) = pipe.borrow().get_coordinates();
+    let mut enclosed = false;
+    main_loop.windows(2).for_each(|pair| {
+        let (_, y1) = pair[0].borrow().get_coordinates();
+        let (x2, y2) = pair[1].borrow().get_coordinates();
+        if (y2 > y) != (y1 > y) && x < x2 {
+            enclosed = !enclosed;
+        }
+    });
+
+    enclosed
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
     const TEST_INPUT_1: &str = include_str!("../test-input-1.txt");
     const TEST_INPUT_2: &str = include_str!("../test-input-2.txt");
+    const TEST_INPUT_3: &str = include_str!("../test-input-3.txt");
+    const TEST_INPUT_4: &str = include_str!("../test-input-4.txt");
+    const TEST_INPUT_5: &str = include_str!("../test-input-5.txt");
+    const TEST_INPUT_6: &str = include_str!("../test-input-6.txt");
     const COMPLETE_INPUT: &str = include_str!("../complete-input.txt");
 
     #[test]
@@ -222,5 +276,20 @@ mod tests {
     #[test]
     fn test_part_1_with_complete_input() {
         assert_eq!(part_1(COMPLETE_INPUT), 6927);
+    }
+
+    #[test]
+    fn test_part_2_with_test_input() {
+        assert_eq!(part_2(TEST_INPUT_1), 1);
+        assert_eq!(part_2(TEST_INPUT_2), 1);
+        assert_eq!(part_2(TEST_INPUT_3), 4);
+        assert_eq!(part_2(TEST_INPUT_4), 8);
+        assert_eq!(part_2(TEST_INPUT_5), 4);
+        assert_eq!(part_2(TEST_INPUT_6), 10);
+    }
+
+    #[test]
+    fn test_part_2_with_complete_input() {
+        assert_eq!(part_2(COMPLETE_INPUT), 467);
     }
 }
