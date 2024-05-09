@@ -1,7 +1,7 @@
 import gleeunit
 import gleeunit/should
-import lib/day_1/part_1.{part_1 as day_1_part_1}
-import lib/day_1/part_2.{part_2 as day_1_part_2}
+import utils/day_1/part_1.{part_1 as day_1_part_1}
+import utils/day_1/part_2.{part_2 as day_1_part_2}
 
 pub fn main() {
   gleeunit.main()
