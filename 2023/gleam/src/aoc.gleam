@@ -1,8 +1,9 @@
+import day_2/part_1.{part_1 as d2p1}
 import gleam/io
-import utils/day_1/part_1
+import gleam/list
 
 pub fn main() {
-  "test-input-01.txt"
-  |> part_1.part_1
-  |> io.debug
+  "td2p1.txt"
+  |> d2p1
+  |> list.each(io.debug)
 }

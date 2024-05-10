@@ -2,29 +2,21 @@ use nom::{bytes::complete::tag, bytes::complete::take_until};
 use std::{cmp, str::FromStr};
 
 pub fn part_01(lines: &Vec<&str>) -> usize {
-    let games = lines
+    lines
         .iter()
         .map(|l| l.parse::<Game>().unwrap())
-        .collect::<Vec<_>>();
-    let possible_games = games.iter().filter(|g| g.is_possible());
-    let sum_of_indexes = possible_games.map(|g| g.get_index()).sum::<usize>();
-
-    sum_of_indexes
+        .filter(|g| g.is_possible())
+        .map(|g| g.get_index())
+        .sum::<usize>()
 }
 
 pub fn part_02(lines: &Vec<&str>) -> usize {
-    let games = lines
+    lines
         .iter()
         .map(|l| l.parse::<Game>().unwrap())
-        .collect::<Vec<_>>();
-
-    let sum_of_powers = games
-        .iter()
         .map(|g| g.get_minimum_sets_of_cubes())
         .map(|set| set.get_power())
-        .sum::<usize>();
-
-    sum_of_powers
+        .sum::<usize>()
 }
 
 #[derive(Debug)]
@@ -52,12 +44,12 @@ impl Cube {
     }
 
     fn is_same_color(&self, other: &Cube) -> bool {
-        match (self, other) {
-            (Cube::Red(_), Cube::Red(_)) => true,
-            (Cube::Green(_), Cube::Green(_)) => true,
-            (Cube::Blue(_), Cube::Blue(_)) => true,
-            _ => false,
-        }
+        matches!(
+            (self, other),
+            (Cube::Red(_), Cube::Red(_))
+                | (Cube::Green(_), Cube::Green(_))
+                | (Cube::Blue(_), Cube::Blue(_))
+        )
     }
 }
 
