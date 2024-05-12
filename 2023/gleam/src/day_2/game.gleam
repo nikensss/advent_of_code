@@ -38,3 +38,8 @@ pub fn is_possible(game: Game) -> Bool {
   game.hands
   |> list.all(hand.is_possible)
 }
+
+pub fn power(game: Game) -> Int {
+  game.hands
+  |> hand.power
+}

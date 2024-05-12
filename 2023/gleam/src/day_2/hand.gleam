@@ -55,3 +55,21 @@ pub fn is_possible(hand: Hand) -> Bool {
 
   red <= 12 && green <= 13 && blue <= 14
 }
+
+fn empty() -> Hand {
+  Hand(red: Cube(0), green: Cube(0), blue: Cube(0))
+}
+
+pub fn power(hands: List(Hand)) -> Int {
+  let hand =
+    hands
+    |> list.fold(from: empty(), with: fn(a, c) {
+      Hand(
+        red: Cube(int.max(a.red.amount, c.red.amount)),
+        green: Cube(int.max(a.green.amount, c.green.amount)),
+        blue: Cube(int.max(a.blue.amount, c.blue.amount)),
+      )
+    })
+
+  hand.red.amount * hand.green.amount * hand.blue.amount
+}
