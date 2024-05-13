@@ -11,49 +11,49 @@ pub fn main() {
 
 // gleeunit test functions end in `_test`
 pub fn day_1_part_1_with_test_input_test() {
-  "td1p1.txt"
+  "src/day_1/test_1.txt"
   |> d1p1
   |> should.equal(142)
 }
 
 pub fn day_1_part_1_with_real_input_test() {
-  "d1.txt"
+  "src/day_1/input.txt"
   |> d1p1
   |> should.equal(54_667)
 }
 
 pub fn day_1_part_2_with_test_input_test() {
-  "td1p2.txt"
+  "src/day_1/test_2.txt"
   |> d1p2
   |> should.equal(281)
 }
 
 pub fn day_1_part_2_with_real_input_test() {
-  "d1.txt"
+  "src/day_1/input.txt"
   |> d1p2
   |> should.equal(54_203)
 }
 
 pub fn day_2_part_1_with_test_input_test() {
-  "td2p1.txt"
+  "src/day_2/test_1.txt"
   |> d2p1
   |> should.equal(8)
 }
 
 pub fn day_2_part_1_with_complete_input_test() {
-  "d2.txt"
+  "src/day_2/input.txt"
   |> d2p1
   |> should.equal(2239)
 }
 
 pub fn day_2_part_2_with_test_input_test() {
-  "td2p1.txt"
+  "src/day_2/test_1.txt"
   |> d2p2
   |> should.equal(2286)
 }
 
 pub fn day_2_part_2_with_complete_input_test() {
-  "d2.txt"
+  "src/day_2/input.txt"
   |> d2p2
   |> should.equal(83_435)
 }
