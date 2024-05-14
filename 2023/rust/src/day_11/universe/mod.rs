@@ -27,16 +27,22 @@ impl Universe {
         Universe { astral_bodies }
     }
 
-    pub fn expand(&mut self) {
+    pub fn expand(&mut self, expansion_rate: usize) {
+        let expansion_rate = match expansion_rate {
+            0 | 1 => 2,
+            rate => rate,
+        };
         let (cols, rows) = self.size();
         let (empty_rows, empty_cols) = (self.get_empty_rows(), self.get_empty_cols());
 
         let mut astral_bodies = HashMap::new();
 
         for col in 0..cols {
-            let col_offset = empty_cols.iter().filter(|&&c| c <= col).count();
+            let col_offset =
+                empty_cols.iter().filter(|&&c| c <= col).count() * (expansion_rate - 1);
             for row in 0..rows {
-                let row_offset = empty_rows.iter().filter(|&&r| r <= row).count();
+                let row_offset =
+                    empty_rows.iter().filter(|&&r| r <= row).count() * (expansion_rate - 1);
                 let new_coords = (col + col_offset, row + row_offset);
                 match self.get_astral_body((col, row)) {
                     Some(Galaxy) => astral_bodies.insert(new_coords, Galaxy),
@@ -158,7 +164,7 @@ mod tests {
     #[test]
     fn test_expand() {
         let mut universe = Universe::new(TEST_INPUT_1);
-        universe.expand();
+        universe.expand(2);
         assert_eq!(universe.size(), (13, 12));
         assert_eq!(universe.get_astral_body((0, 0)), Some(&Void));
         assert_eq!(universe.get_astral_body((3, 0)), Some(&Void));
@@ -166,18 +172,44 @@ mod tests {
         assert_eq!(universe.get_astral_body((0, 2)), Some(&Galaxy));
         assert_eq!(universe.get_astral_body((0, 9)), Some(&Void));
         assert_eq!(universe.get_astral_body((0, 11)), Some(&Galaxy));
+
+        let mut universe = Universe::new(TEST_INPUT_1);
+        universe.expand(10);
+        assert_eq!(universe.size(), (37, 28));
+        assert_eq!(universe.get_astral_body((0, 0)), Some(&Void));
+        assert_eq!(universe.get_astral_body((12, 0)), Some(&Galaxy));
     }
 
     #[test]
     fn test_get_distances() {
         let mut universe = Universe::new(TEST_INPUT_1);
-        universe.expand();
+        universe.expand(2);
         assert_eq!(
             universe
                 .get_distances_between_galaxies()
                 .iter()
                 .sum::<usize>(),
             374
-        )
+        );
+
+        let mut universe = Universe::new(TEST_INPUT_1);
+        universe.expand(10);
+        assert_eq!(
+            universe
+                .get_distances_between_galaxies()
+                .iter()
+                .sum::<usize>(),
+            1030
+        );
+
+        let mut universe = Universe::new(TEST_INPUT_1);
+        universe.expand(100);
+        assert_eq!(
+            universe
+                .get_distances_between_galaxies()
+                .iter()
+                .sum::<usize>(),
+            8410
+        );
     }
 }
