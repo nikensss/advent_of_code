@@ -17,16 +17,20 @@ pub fn from_string(input: String) -> Hand {
     |> list.map(to_tuple)
     |> dict.from_list
 
-  let assert [red, green, blue] = [
-    dict.get(cubes, "red")
+  Hand(
+    red: Cube(
+      dict.get(cubes, "red")
       |> result.unwrap(0),
-    dict.get(cubes, "green")
+    ),
+    green: Cube(
+      dict.get(cubes, "green")
       |> result.unwrap(0),
-    dict.get(cubes, "blue")
+    ),
+    blue: Cube(
+      dict.get(cubes, "blue")
       |> result.unwrap(0),
-  ]
-
-  Hand(red: Cube(red), green: Cube(green), blue: Cube(blue))
+    ),
+  )
 }
 
 fn to_tuple(input: List(String)) -> #(String, Int) {
